@@ -57,23 +57,33 @@ export function useReownConnect() {
         throw new Error('No se pudo inicializar el conector');
       }
 
+      console.log('🔌 Iniciando conexión con DAppConnector...');
+
       // Inicializar sesión
       await connector.init({ logger: 'error' });
+      console.log('✅ DAppConnector inicializado');
 
       // Abrir modal de conexión
+      console.log('🔓 Abriendo modal de conexión...');
       await connector.openModal();
+      console.log('✅ Modal abierto, esperando selección de wallet...');
 
       // Esperar a que se complete la conexión
       const session = connector.signers[0];
+      console.log('📝 Signers encontrados:', connector.signers.length);
       
       if (session) {
         const accountId = session.getAccountId();
+        console.log('✅ Cuenta conectada:', accountId.toString());
         setAccount(accountId.toString());
         setIsConnected(true);
+      } else {
+        console.warn('⚠️ No se encontró ninguna sesión/signer después de la conexión');
       }
 
     } catch (error) {
-      console.error('Error de conexión con Reown AppKit:', error);
+      console.error('❌ Error de conexión con Reown AppKit:', error);
+      alert('Error al conectar: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -90,7 +100,7 @@ export function useReownConnect() {
 
   // Función para realizar llamadas nativas (ej. hedera_signAndExecuteTransaction)
   const callNativeMethod = useCallback(async (method: string, params: any) => {
-    if (!dAppConnector || !isConnected) {
+    if (!dAppConnector || !isConnected || !account) {
       throw new Error("No estás conectado a Reown AppKit.");
     }
     
@@ -99,16 +109,23 @@ export function useReownConnect() {
       throw new Error("No hay signer disponible");
     }
 
+    console.log('📡 Llamando método:', method);
+    console.log('📦 Parámetros:', params);
+
     // Ejecutar método según el tipo
     if (method === 'hedera_signAndExecuteTransaction') {
-      // Aquí deberías construir la transacción usando el SDK de Hedera
-      // y luego ejecutarla con el signer
-      const result = await signer.call(params.transaction);
+      // Usar el método correcto de DAppConnector
+      const result = await dAppConnector.signAndExecuteTransaction({
+        signerAccountId: account,
+        transactionList: params.transaction
+      });
+      
+      console.log('✅ Resultado de transacción:', result);
       return result;
     }
 
     throw new Error(`Método ${method} no soportado`);
-  }, [isConnected]);
+  }, [isConnected, account]);
 
   return { connect, disconnect, callNativeMethod, isConnected, account, loading };
 }

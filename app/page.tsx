@@ -2,26 +2,50 @@
 
 import React from 'react';
 import { useReownConnect } from '@/hooks/useReownConnect';
+import { TransferTransaction, Hbar, AccountId } from '@hashgraph/sdk';
 
 export default function Home() {
   const { connect, callNativeMethod, isConnected, account, loading } = useReownConnect();
 
   const handleAssociateToken = async () => {
-    if (!isConnected) {
+    if (!isConnected || !account) {
       alert('Por favor, conéctate primero.');
       return;
     }
 
-    const dummyTxHex = '...';
-
     try {
+      console.log('🚀 Iniciando prueba de transacción HTS...');
+      console.log('📝 Cuenta conectada:', account);
+
+      // Crear una transacción de transferencia simple como prueba
+      // Enviamos 1 tinybar (0.00000001 HBAR) a la cuenta de prueba de Hedera
+      const transaction = new TransferTransaction()
+        .addHbarTransfer(AccountId.fromString(account), new Hbar(-0.00000001)) // De tu cuenta
+        .addHbarTransfer(AccountId.fromString('0.0.98'), new Hbar(0.00000001)) // A cuenta de prueba
+        .setTransactionMemo('Test desde DeraSwap dApp');
+
+      console.log('✅ Transacción construida');
+
+      // Serializar la transacción a bytes y luego a base64
+      const transactionBytes = transaction.toBytes();
+      
+      // Convertir Uint8Array a base64 sin usar Buffer
+      const base64String = btoa(
+        String.fromCharCode(...Array.from(transactionBytes))
+      );
+      
+      console.log('📤 Enviando transacción para firma...');
+      console.log('📝 Transacción base64 (primeros 100 chars):', base64String.substring(0, 100));
+
       const response = await callNativeMethod('hedera_signAndExecuteTransaction', {
-        transaction: dummyTxHex,
+        transaction: base64String,
       });
-      alert(`Transacción nativa exitosa. ID: ${response.transactionId}`);
-      console.log('Respuesta de la transacción:', response);
+      
+      console.log('✅ Respuesta recibida:', response);
+      alert(`✅ Transacción exitosa!\n\nID: ${(response as any)?.transactionId || JSON.stringify(response)}`);
     } catch (error: any) {
-      alert(`Error al ejecutar transacción nativa: ${error.message}`);
+      console.error('❌ Error en transacción:', error);
+      alert(`❌ Error al ejecutar transacción: ${error.message}`);
     }
   };
 
