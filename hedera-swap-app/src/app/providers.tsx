@@ -16,11 +16,14 @@ const metadata = {
 };
 
 // IDs de wallets destacados de Hedera
-// HashPack, Kabila, Blade, etc.
+// Incluye wallets específicas de Hedera como HashPack, Blade, Kabila
 const featuredWalletIds = [
-  'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask (común en Hedera)
-  '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Trust Wallet
-  '38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662', // Bitget Wallet
+  // HashPack - La wallet más popular de Hedera
+  '025d6470fb0e7ba666c0c4d3e8b44bfda30c0fa57b6db0e7c7c5f5d6e4e8c1e8',
+  // Blade Wallet
+  '8308656f4548bb81b3508afe355cfbb7f0cb6253d1cc7f998080601f838ecee3',
+  // MetaMask (también soporta Hedera)
+  'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',
 ];
 
 // Crear AppKit

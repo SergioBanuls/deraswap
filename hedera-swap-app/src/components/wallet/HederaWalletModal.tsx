@@ -7,8 +7,8 @@ interface WalletOption {
   name: string;
   icon: string;
   description: string;
-  deepLink: string;
   downloadUrl: string;
+  note?: string;
 }
 
 const HEDERA_WALLETS: WalletOption[] = [
@@ -16,22 +16,22 @@ const HEDERA_WALLETS: WalletOption[] = [
     name: 'HashPack',
     icon: '🔷',
     description: 'The most popular Hedera wallet',
-    deepLink: 'hashpack://',
     downloadUrl: 'https://www.hashpack.app/',
-  },
-  {
-    name: 'Kabila',
-    icon: '🟣',
-    description: 'Mobile-first Hedera wallet',
-    deepLink: 'kabila://',
-    downloadUrl: 'https://www.kabila.app/',
+    note: 'Extensión para navegador',
   },
   {
     name: 'Blade',
     icon: '⚔️',
     description: 'Secure Hedera wallet',
-    deepLink: 'blade://',
     downloadUrl: 'https://bladewallet.io/',
+    note: 'Extensión para navegador',
+  },
+  {
+    name: 'Kabila',
+    icon: '🟣',
+    description: 'Mobile-first Hedera wallet',
+    downloadUrl: 'https://www.kabila.app/',
+    note: 'Principalmente móvil',
   },
 ];
 
@@ -45,39 +45,52 @@ export function HederaWalletModal({ isOpen, onClose }: HederaWalletModalProps) {
 
   if (!isOpen) return null;
 
-  const handleWalletClick = (wallet: WalletOption) => {
-    // Intentar abrir la wallet directamente
-    if (typeof window !== 'undefined') {
-      // Verificar si la wallet está instalada
-      const isInstalled = checkWalletInstalled(wallet.name);
-
-      if (isInstalled) {
-        // Si está instalada, abrir WalletConnect que la detectará
-        openWalletConnect();
-        onClose();
-      } else {
-        // Si no está instalada, mostrar opción de descarga
-        if (confirm(`${wallet.name} no está instalada. ¿Deseas descargarla ahora?`)) {
-          window.open(wallet.downloadUrl, '_blank');
-        }
-      }
-    }
-  };
-
   const checkWalletInstalled = (walletName: string): boolean => {
     if (typeof window === 'undefined') return false;
 
-    // Verificar si la extensión está instalada
-    switch (walletName) {
-      case 'HashPack':
-        return !!(window as any).hashpack;
-      case 'Kabila':
-        return !!(window as any).kabila;
-      case 'Blade':
-        return !!(window as any).blade;
-      default:
-        return false;
+    // Verificar en window directamente
+    if (walletName === 'HashPack') {
+      // HashPack puede inyectarse como window.hashpack o en ethereum.providers
+      if ((window as any).hashpack) return true;
+      if ((window as any).hashconnect) return true;
+      if (window.ethereum && (window.ethereum as any).isHashPack) return true;
+
+      // Verificar en providers array
+      if (window.ethereum && (window.ethereum as any).providers) {
+        const providers = (window.ethereum as any).providers;
+        if (Array.isArray(providers)) {
+          return providers.some((p: any) => p.isHashPack);
+        }
+      }
     }
+
+    if (walletName === 'Blade') {
+      if ((window as any).blade) return true;
+      if ((window as any).bladewallet) return true;
+      if (window.ethereum && (window.ethereum as any).isBlade) return true;
+
+      if (window.ethereum && (window.ethereum as any).providers) {
+        const providers = (window.ethereum as any).providers;
+        if (Array.isArray(providers)) {
+          return providers.some((p: any) => p.isBlade);
+        }
+      }
+    }
+
+    if (walletName === 'Kabila') {
+      if ((window as any).kabila) return true;
+    }
+
+    return false;
+  };
+
+  const handleWalletClick = async (wallet: WalletOption) => {
+    if (typeof window === 'undefined') return;
+
+    // Siempre abrir WalletConnect - tiene mejor detección de wallets
+    // El modal mostrará todas las wallets disponibles incluyendo las instaladas
+    openWalletConnect();
+    onClose();
   };
 
   return (
@@ -113,28 +126,51 @@ export function HederaWalletModal({ isOpen, onClose }: HederaWalletModalProps) {
               Choose your Hedera wallet:
             </p>
 
-            {HEDERA_WALLETS.map((wallet) => (
-              <button
-                key={wallet.name}
-                onClick={() => handleWalletClick(wallet)}
-                className="w-full flex items-center gap-4 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group"
-              >
-                <div className="text-4xl">{wallet.icon}</div>
-                <div className="flex-1 text-left">
-                  <div className="font-semibold text-gray-900 dark:text-white">
-                    {wallet.name}
+            {HEDERA_WALLETS.map((wallet) => {
+              const isInstalled = checkWalletInstalled(wallet.name);
+              return (
+                <button
+                  key={wallet.name}
+                  onClick={() => handleWalletClick(wallet)}
+                  className={`w-full flex items-center gap-4 p-4 border-2 rounded-xl transition-all group ${
+                    isInstalled
+                      ? 'border-green-300 dark:border-green-700 hover:border-green-500 dark:hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                  }`}
+                >
+                  <div className="text-4xl">{wallet.icon}</div>
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {wallet.name}
+                      </span>
+                      {isInstalled && (
+                        <span className="text-xs bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">
+                          Instalada
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {wallet.description}
+                    </div>
+                    {wallet.note && (
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        {wallet.note}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {wallet.description}
+                  <div className={`transition-colors ${
+                    isInstalled
+                      ? 'text-green-500 group-hover:text-green-600'
+                      : 'text-gray-400 group-hover:text-blue-500'
+                  }`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
-                </div>
-                <div className="text-gray-400 group-hover:text-blue-500">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
 
           {/* Divider */}
@@ -166,17 +202,33 @@ export function HederaWalletModal({ isOpen, onClose }: HederaWalletModalProps) {
           </button>
 
           {/* Info */}
-          <p className="mt-4 text-xs text-center text-gray-500 dark:text-gray-400">
-            Don't have a wallet?{' '}
-            <a
-              href="https://www.hashpack.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Get HashPack
-            </a>
-          </p>
+          <div className="mt-4 space-y-2">
+            <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+              Don't have a wallet?{' '}
+              <a
+                href="https://www.hashpack.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Get HashPack
+              </a>
+            </p>
+            <details className="text-xs text-gray-500 dark:text-gray-400">
+              <summary className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 text-center">
+                Wallet no detectada?
+              </summary>
+              <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-left space-y-2">
+                <p>Si tu wallet está instalada pero no se detecta:</p>
+                <ol className="list-decimal list-inside space-y-1 text-xs">
+                  <li>Asegúrate de que la extensión esté activa</li>
+                  <li>Recarga la página (Cmd+Shift+R / Ctrl+Shift+R)</li>
+                  <li>Haz clic en "Other Wallets" y búscala allí</li>
+                  <li>Consulta DEBUG_WALLETS.md para más ayuda</li>
+                </ol>
+              </div>
+            </details>
+          </div>
         </div>
       </div>
     </>
