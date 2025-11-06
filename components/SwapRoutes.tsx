@@ -1,15 +1,23 @@
+/**
+ * Swap Routes Component
+ *
+ * Displays available swap routes with price impact, gas estimates, and time estimates.
+ * Optimized with React.memo and useCallback to prevent unnecessary re-renders.
+ */
+
 'use client';
 
+import { memo, useState, useCallback } from 'react';
 import { Token } from '@/types/token';
 import { SwapRoute } from '@/types/route';
 import { useSwapRoutes } from '@/hooks/useSwapRoutes';
 import { ChevronDown, Fuel, Clock } from 'lucide-react';
-import { useState } from 'react';
 
 interface SwapRoutesProps {
   fromToken: Token | null;
   toToken: Token | null;
   amount: string;
+  slippageTolerance: number;
   onRouteSelect?: (route: SwapRoute) => void;
 }
 
@@ -28,16 +36,16 @@ function formatGasCost(gasEstimate: number): string {
   return costInDollars < 0.01 ? '<$0.01' : `$${costInDollars.toFixed(2)}`;
 }
 
-export function SwapRoutes({ fromToken, toToken, amount, onRouteSelect }: SwapRoutesProps) {
-  const { routes, loading, error } = useSwapRoutes(fromToken, toToken, amount);
+export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount, slippageTolerance, onRouteSelect }: SwapRoutesProps) {
+  const { data: routes, isLoading, error } = useSwapRoutes(fromToken, toToken, amount, undefined, slippageTolerance);
   const [selectedRoute, setSelectedRoute] = useState<number>(0);
 
-  const handleSelectRoute = (index: number) => {
+  const handleSelectRoute = useCallback((index: number) => {
     setSelectedRoute(index);
-    if (onRouteSelect && routes[index]) {
+    if (onRouteSelect && routes && routes[index]) {
       onRouteSelect(routes[index]);
     }
-  };
+  }, [onRouteSelect, routes]);
 
   return (
     <div className="w-full">
@@ -45,7 +53,7 @@ export function SwapRoutes({ fromToken, toToken, amount, onRouteSelect }: SwapRo
       <div className="bg-neutral-900 rounded-t-3xl p-6 pb-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white">Receive</h2>
-          {loading && (
+          {isLoading && (
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
           )}
         </div>
@@ -53,21 +61,23 @@ export function SwapRoutes({ fromToken, toToken, amount, onRouteSelect }: SwapRo
 
       {/* Routes Container */}
       <div className="bg-neutral-900 rounded-b-3xl p-6 pt-2 space-y-3 max-h-[600px] overflow-y-auto">
-        {loading && (
+        {isLoading && (
           <div className="flex items-center justify-center py-8">
             <div className="text-white/60">Loading routes...</div>
           </div>
         )}
 
-        {error && !loading && (
-          <div className="text-red-400 text-sm text-center py-4">{error}</div>
+        {error && !isLoading && (
+          <div className="text-red-400 text-sm text-center py-4">
+            {error instanceof Error ? error.message : 'Failed to load routes'}
+          </div>
         )}
 
-        {!loading && !error && routes.length === 0 && (
+        {!isLoading && !error && (!routes || routes.length === 0) && (
           <div className="text-white/60 text-sm text-center py-4">No routes available</div>
         )}
 
-        {!loading && fromToken && toToken && routes.map((route, index) => {
+        {!isLoading && fromToken && toToken && routes && routes.map((route, index) => {
         const isBestRoute = index === 0;
         const isSelected = index === selectedRoute;
 
@@ -153,5 +163,5 @@ export function SwapRoutes({ fromToken, toToken, amount, onRouteSelect }: SwapRo
       </div>
     </div>
   );
-}
+});
 

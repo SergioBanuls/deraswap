@@ -42,6 +42,7 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [account, setAccount] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Inicializa DAppConnector de Hedera con Reown
   const initializeDAppConnector = useCallback(() => {
@@ -72,7 +73,7 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
   // Función para iniciar la conexión
   const connect = useCallback(async () => {
     setLoading(true);
-    
+
     try {
       const connector = initializeDAppConnector();
       if (!connector) {
@@ -93,12 +94,16 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
       // Esperar a que se complete la conexión
       const session = connector.signers[0];
       console.log('📝 Signers encontrados:', connector.signers.length);
-      
+
       if (session) {
         const accountId = session.getAccountId();
         console.log('✅ Cuenta conectada:', accountId.toString());
         setAccount(accountId.toString());
         setIsConnected(true);
+
+        // Guardar sesión en localStorage para persistencia
+        localStorage.setItem('hedera_wallet_connected', 'true');
+        localStorage.setItem('hedera_account_id', accountId.toString());
       } else {
         console.warn('⚠️ No se encontró ninguna sesión/signer después de la conexión');
       }
@@ -117,6 +122,10 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
       await dAppConnector.disconnectAll();
       setIsConnected(false);
       setAccount(null);
+
+      // Limpiar localStorage
+      localStorage.removeItem('hedera_wallet_connected');
+      localStorage.removeItem('hedera_account_id');
     }
   }, []);
 
@@ -136,18 +145,88 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
 
     // Ejecutar método según el tipo
     if (method === 'hedera_signAndExecuteTransaction') {
+      // Convertir Uint8Array a base64 si es necesario
+      let transactionBytes = params.transaction;
+      let transactionBase64: string;
+
+      if (transactionBytes instanceof Uint8Array) {
+        // Convertir Uint8Array a base64 usando btoa
+        const binary = Array.from(transactionBytes)
+          .map(byte => String.fromCharCode(byte))
+          .join('');
+        transactionBase64 = btoa(binary);
+        console.log('🔄 Convertido Uint8Array a base64');
+      } else {
+        transactionBase64 = transactionBytes;
+      }
+
+      console.log('📝 Transaction base64 (primeros 100 chars):',
+        transactionBase64.substring(0, 100)
+      );
+
       // Usar el método correcto de DAppConnector
+      // El parámetro es "transactionList" como un string base64
       const result = await dAppConnector.signAndExecuteTransaction({
         signerAccountId: account,
-        transactionList: params.transaction
+        transactionList: transactionBase64
       });
-      
+
       console.log('✅ Resultado de transacción:', result);
       return result;
     }
 
     throw new Error(`Método ${method} no soportado`);
   }, [isConnected, account]);
+
+  // Restaurar sesión al cargar la página
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (isInitialized) return; // Ya inicializado
+
+      const wasConnected = localStorage.getItem('hedera_wallet_connected');
+      const savedAccount = localStorage.getItem('hedera_account_id');
+
+      if (wasConnected === 'true' && savedAccount) {
+        console.log('🔄 Restaurando sesión guardada...');
+        setLoading(true);
+
+        try {
+          const connector = initializeDAppConnector();
+          if (!connector) {
+            throw new Error('No se pudo inicializar el conector');
+          }
+
+          // Inicializar sin abrir modal
+          await connector.init({ logger: 'error' });
+
+          // Verificar si hay sesión activa
+          const session = connector.signers[0];
+
+          if (session) {
+            const accountId = session.getAccountId();
+            console.log('✅ Sesión restaurada:', accountId.toString());
+            setAccount(accountId.toString());
+            setIsConnected(true);
+          } else {
+            console.log('⚠️ No hay sesión activa, limpiando localStorage');
+            localStorage.removeItem('hedera_wallet_connected');
+            localStorage.removeItem('hedera_account_id');
+          }
+        } catch (error) {
+          console.error('❌ Error al restaurar sesión:', error);
+          localStorage.removeItem('hedera_wallet_connected');
+          localStorage.removeItem('hedera_account_id');
+        } finally {
+          setLoading(false);
+          setIsInitialized(true);
+        }
+      } else {
+        setIsInitialized(true);
+      }
+    };
+
+    restoreSession();
+  }, [initializeDAppConnector, isInitialized]);
 
   const value: ReownContextType = {
     isConnected,

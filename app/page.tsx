@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { SwapCard } from '@/components/SwapCard';
 import { SwapRoutes } from '@/components/SwapRoutes';
+import { SettingsDialog } from '@/components/SettingsDialog';
 import { Token } from '@/types/token';
 import { SwapRoute } from '@/types/route';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useSwapSettings } from '@/hooks/useSwapSettings';
 
 export default function Home() {
   const [fromToken, setFromToken] = useState<Token | null>(null);
@@ -12,17 +15,30 @@ export default function Home() {
   const [amount, setAmount] = useState('');
   const [dialogType, setDialogType] = useState<'from' | 'to' | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<SwapRoute | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Determine if routes should be shown
-  const showRoutes = fromToken !== null && toToken !== null && amount !== '' && parseFloat(amount) > 0;
+  // Swap settings (slippage, deadline)
+  const { settings, setSlippageTolerance, enableAutoSlippage, getEffectiveSlippage } = useSwapSettings();
 
-  const handleSwapTokens = () => {
+  // Calculate effective slippage (auto or manual)
+  const effectiveSlippage = getEffectiveSlippage(selectedRoute);
+
+  // Debounce amount to reduce API calls while user is typing
+  const debouncedAmount = useDebouncedValue(amount, 500);
+
+  // Memoize showRoutes calculation
+  const showRoutes = useMemo(() => {
+    return fromToken !== null && toToken !== null && amount !== '' && parseFloat(amount) > 0;
+  }, [fromToken, toToken, amount]);
+
+  // Memoize handler functions
+  const handleSwapTokens = useCallback(() => {
     const temp = fromToken;
     setFromToken(toToken);
     setToToken(temp);
-  };
+  }, [fromToken, toToken]);
 
-  const handleFromTokenSelect = (token: Token) => {
+  const handleFromTokenSelect = useCallback((token: Token) => {
     // If new From token matches To token
     if (toToken && token.id === toToken.id) {
       // If both tokens are selected, swap them
@@ -34,9 +50,9 @@ export default function Home() {
       }
     }
     setFromToken(token);
-  };
+  }, [toToken, fromToken]);
 
-  const handleToTokenSelect = (token: Token) => {
+  const handleToTokenSelect = useCallback((token: Token) => {
     // If new To token matches From token
     if (fromToken && token.id === fromToken.id) {
       // If both tokens are selected, swap them
@@ -48,7 +64,7 @@ export default function Home() {
       }
     }
     setToToken(token);
-  };
+  }, [fromToken, toToken]);
 
   return (
     <div className="flex items-center justify-center mt-36 w-full">
@@ -63,6 +79,10 @@ export default function Home() {
               fromToken={fromToken}
               toToken={toToken}
               amount={amount}
+              selectedRoute={selectedRoute}
+              settings={settings}
+              effectiveSlippage={effectiveSlippage}
+              onSettingsClick={() => setSettingsOpen(true)}
               onFromTokenSelect={handleFromTokenSelect}
               onToTokenSelect={handleToTokenSelect}
               onAmountChange={setAmount}
@@ -74,20 +94,32 @@ export default function Home() {
 
           {/* Right Column - Swap Routes */}
           <div className={`w-full max-w-md mx-auto transition-all duration-700 ease-in-out relative z-0 ${
-            showRoutes 
-              ? 'opacity-100 scale-100' 
+            showRoutes
+              ? 'opacity-100 scale-100'
               : 'opacity-0 lg:-translate-x-[50%] scale-95 pointer-events-none'
           }`}>
             {showRoutes && (
               <SwapRoutes
                 fromToken={fromToken}
                 toToken={toToken}
-                amount={amount}
+                amount={debouncedAmount}
+                slippageTolerance={effectiveSlippage}
                 onRouteSelect={setSelectedRoute}
               />
             )}
           </div>
         </div>
+
+        {/* Settings Dialog */}
+        <SettingsDialog
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          settings={settings}
+          selectedRoute={selectedRoute}
+          effectiveSlippage={effectiveSlippage}
+          onSlippageChange={setSlippageTolerance}
+          onAutoModeChange={enableAutoSlippage}
+        />
       </div>
     </div>
   );

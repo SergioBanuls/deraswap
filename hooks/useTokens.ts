@@ -1,44 +1,35 @@
+/**
+ * Hook for fetching the list of known tokens from SaucerSwap
+ *
+ * Uses TanStack Query for intelligent caching and background refetching.
+ * Tokens are cached for 5 minutes as they don't change frequently.
+ *
+ * @returns {Object} - TanStack Query result with tokens data
+ */
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Token } from '@/types/token';
 
-const API_URL = 'https://api.saucerswap.finance/tokens/known';
-const API_KEY = 'apiecc67c61f291370370502bd1e5adf';
+async function fetchTokens(): Promise<Token[]> {
+  const response = await fetch('/api/tokens');
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch tokens');
+  }
+
+  const data = await response.json();
+  return data;
+}
 
 export function useTokens() {
-  const [tokens, setTokens] = useState<Token[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchTokens() {
-      try {
-        setLoading(true);
-        const response = await fetch(API_URL, {
-          headers: {
-            'x-api-key': API_KEY,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch tokens');
-        }
-
-        const data = await response.json();
-        setTokens(data);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch tokens');
-        console.error('Error fetching tokens:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchTokens();
-  }, []);
-
-  return { tokens, loading, error };
+  return useQuery({
+    queryKey: ['tokens'],
+    queryFn: fetchTokens,
+    staleTime: 5 * 60 * 1000, // 5min - tokens don't change frequently
+    gcTime: 60 * 60 * 1000, // 1h
+    refetchOnWindowFocus: false,
+  });
 }
 

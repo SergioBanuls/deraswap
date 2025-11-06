@@ -18,10 +18,10 @@ interface TokenSelectDialogProps {
 }
 
 export function TokenSelectDialog({ open, onOpenChange, onSelectToken }: TokenSelectDialogProps) {
-  const { tokens, loading, error } = useTokens();
+  const { data: tokens, isLoading, error } = useTokens();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredTokens = tokens.filter(
+  const filteredTokens = (tokens || []).filter(
     (token) =>
       token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
       token.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -48,15 +48,17 @@ export function TokenSelectDialog({ open, onOpenChange, onSelectToken }: TokenSe
             className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
-          {loading && (
+          {isLoading && (
             <div className="text-center py-8 text-white/70">Loading tokens...</div>
           )}
 
           {error && (
-            <div className="text-center py-8 text-red-400">Error: {error}</div>
+            <div className="text-center py-8 text-red-400">
+              Error: {error instanceof Error ? error.message : 'Failed to load tokens'}
+            </div>
           )}
 
-          {!loading && !error && (
+          {!isLoading && !error && (
             <div className="max-h-[280px] overflow-y-auto space-y-1">
               {filteredTokens.length === 0 ? (
                 <div className="text-center py-8 text-white/70">No tokens found</div>

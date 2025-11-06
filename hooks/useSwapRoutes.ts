@@ -1,132 +1,191 @@
+/**
+ * Hook for fetching swap routes from ETASwap API
+ *
+ * Uses TanStack Query for intelligent caching and deduplication.
+ * Validates inputs before making API calls to prevent overflow/underflow.
+ * Routes are cached for 30 seconds and deduplicated within 5 seconds.
+ *
+ * @param fromToken - Source token
+ * @param toToken - Destination token
+ * @param amount - Amount to swap (human-readable format)
+ * @param balance - Optional user balance for validation
+ * @returns {Object} - TanStack Query result with routes data
+ */
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { TokenId } from '@hashgraph/sdk';
 import axios from 'axios';
 import { Token } from '@/types/token';
 import { SwapRoute } from '@/types/route';
+import { validateAmount, formatAmount } from '@/utils/amountValidation';
+import { filterValidRoutes, DEFAULT_ROUTE_CONFIG } from '@/utils/routeValidation';
 
 const ETASWAP_API_BASE_URL = 'https://api.etaswap.com/v1';
 const WHBAR_TOKEN_ID = '0.0.1456986';
 
-// Format output amount with token decimals
-function formatAmount(amount: string, decimals: number): string {
-  const amountBigInt = BigInt(amount);
-  const divisor = BigInt(10 ** decimals);
-  const whole = amountBigInt / divisor;
-  const fraction = amountBigInt % divisor;
-  const fractionStr = fraction.toString().padStart(decimals, '0').replace(/0+$/, '') || '0';
-  return `${whole}.${fractionStr}`;
+interface FetchRoutesParams {
+  fromToken: Token;
+  toToken: Token;
+  amount: string;
+  balance?: string;
+  slippageTolerance?: number;
+}
+
+async function fetchSwapRoutes({
+  fromToken,
+  toToken,
+  amount,
+  balance,
+  slippageTolerance,
+}: FetchRoutesParams): Promise<SwapRoute[]> {
+  // Validate amount before making API call
+  const validation = validateAmount(amount, fromToken.decimals, balance);
+  if (!validation.valid) {
+    throw new Error(validation.error || 'Invalid amount');
+  }
+
+  // Use validated/sanitized amount
+  const inputAmount = validation.sanitized!;
+
+  // Handle HBAR → WHBAR conversion
+  const fromTokenId = fromToken.id === 'HBAR' ? WHBAR_TOKEN_ID : fromToken.id;
+  const toTokenId = toToken.id === 'HBAR' ? WHBAR_TOKEN_ID : toToken.id;
+
+  // Convert token IDs to Solidity addresses
+  const tokenFromAddress =
+    '0x' + TokenId.fromString(fromTokenId).toSolidityAddress();
+  const tokenToAddress =
+    '0x' + TokenId.fromString(toTokenId).toSolidityAddress();
+
+  // Fetch routes from ETASwap API
+  const url = `${ETASWAP_API_BASE_URL}/rates`;
+  const params = {
+    tokenFrom: tokenFromAddress,
+    tokenTo: tokenToAddress,
+    amount: inputAmount,
+    isReverse: false,
+  };
+
+  console.log('ETASwap API request:', { url, params });
+
+  const response = await axios.get(url, { params });
+  const etaRoutes = response.data;
+
+  console.log(`ETASwap returned ${etaRoutes?.length || 0} routes`);
+
+  if (!Array.isArray(etaRoutes)) {
+    throw new Error('Invalid response format from ETASwap API');
+  }
+
+  if (etaRoutes.length === 0) {
+    console.warn('No routes found from ETASwap');
+    return [];
+  }
+
+  // Process routes and add computed fields
+  const processedRoutes: SwapRoute[] = etaRoutes.map((route: any) => {
+    // Calculate total output amount
+    let totalAmountTo: string;
+    if (Array.isArray(route.amountTo)) {
+      // Sum up all amounts for split swaps
+      totalAmountTo = route.amountTo.reduce(
+        (sum: string, amt: string) => (BigInt(sum) + BigInt(amt)).toString(),
+        '0'
+      );
+    } else {
+      totalAmountTo = route.amountTo;
+    }
+
+    // Format output amount
+    const outputAmountFormatted = formatAmount(
+      totalAmountTo,
+      toToken.decimals
+    );
+
+    // Calculate price impact using USD values
+    // Price impact = (actualValue - expectedValue) / expectedValue * 100
+    const inputAmountHuman = parseFloat(formatAmount(inputAmount, fromToken.decimals));
+    const outputAmountHuman = parseFloat(outputAmountFormatted);
+
+    const expectedValueUSD = inputAmountHuman * fromToken.priceUsd;
+    const actualValueUSD = outputAmountHuman * toToken.priceUsd;
+
+    // Calculate price impact as percentage difference
+    const priceImpact = expectedValueUSD > 0
+      ? ((actualValueUSD - expectedValueUSD) / expectedValueUSD) * 100
+      : 0;
+
+    return {
+      transactionType: route.transactionType,
+      aggregatorId: route.aggregatorId,
+      amountFrom: route.amountFrom,
+      amountTo: route.amountTo,
+      path: route.path,
+      route: route.route,
+      gasEstimate: route.gasEstimate,
+      outputAmountFormatted,
+      priceImpact,
+    };
+  });
+
+  // Log processed routes for debugging
+  console.log('Processed routes:', processedRoutes.map(r => ({
+    type: r.transactionType,
+    aggregator: r.aggregatorId,
+    output: r.outputAmountFormatted,
+    priceImpact: r.priceImpact.toFixed(2) + '%',
+    gasEstimate: r.gasEstimate
+  })));
+
+  // Filter out malicious or invalid routes
+  // Pass user's slippage tolerance to filter routes based on price impact
+  const validRoutes = filterValidRoutes(processedRoutes, fromToken, toToken, {
+    ...DEFAULT_ROUTE_CONFIG,
+    userSlippageTolerance: slippageTolerance,
+  });
+
+  console.log(`Valid routes after filtering: ${validRoutes.length}/${processedRoutes.length}`);
+
+  if (validRoutes.length === 0 && processedRoutes.length > 0) {
+    console.error('All routes were rejected by validation');
+    throw new Error(
+      'No valid routes found. All routes failed security validation.'
+    );
+  }
+
+  return validRoutes;
 }
 
 export function useSwapRoutes(
   fromToken: Token | null,
   toToken: Token | null,
-  amount: string
+  amount: string,
+  balance?: string,
+  slippageTolerance?: number
 ) {
-  const [routes, setRoutes] = useState<SwapRoute[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!fromToken || !toToken || !amount || parseFloat(amount) === 0) {
-      setRoutes([]);
-      setLoading(false);
-      return;
-    }
-
-    let isCancelled = false;
-
-    // Capture tokens to avoid null checks in async context
-    const from = fromToken;
-    const to = toToken;
-
-    async function fetchRoutes() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const inputAmount = Math.floor(parseFloat(amount) * 10 ** from.decimals);
-        
-        // Handle HBAR → WHBAR conversion
-        const fromTokenId = from.id === 'HBAR' ? WHBAR_TOKEN_ID : from.id;
-        const toTokenId = to.id === 'HBAR' ? WHBAR_TOKEN_ID : to.id;
-
-        // Convert token IDs to Solidity addresses
-        const tokenFromAddress = '0x' + TokenId.fromString(fromTokenId).toSolidityAddress();
-        const tokenToAddress = '0x' + TokenId.fromString(toTokenId).toSolidityAddress();
-
-        // Fetch routes from ETASwap API
-        const url = `${ETASWAP_API_BASE_URL}/rates`;
-        const params = {
-          tokenFrom: tokenFromAddress,
-          tokenTo: tokenToAddress,
-          amount: inputAmount.toString(),
-          isReverse: false,
-        };
-
-        console.log('ETASwap API request:', { url, params });
-
-        const response = await axios.get(url, { params });
-        const etaRoutes = response.data;
-
-        if (!isCancelled && Array.isArray(etaRoutes)) {
-          // Process routes and add computed fields
-          const processedRoutes: SwapRoute[] = etaRoutes.map((route: any) => {
-            // Calculate total output amount
-            let totalAmountTo: string;
-            if (Array.isArray(route.amountTo)) {
-              // Sum up all amounts for split swaps
-              totalAmountTo = route.amountTo.reduce(
-                (sum: string, amt: string) => (BigInt(sum) + BigInt(amt)).toString(),
-                '0'
-              );
-            } else {
-              totalAmountTo = route.amountTo;
-            }
-
-            // Format output amount
-            const outputAmountFormatted = formatAmount(totalAmountTo, to.decimals);
-
-            // Calculate price impact
-            // Price impact = (output - expected) / expected * 100
-            // For simplicity, we'll use the input amount as expected (1:1 ratio baseline)
-            const expectedOutput = BigInt(inputAmount);
-            const actualOutput = BigInt(totalAmountTo);
-            const priceImpact = Number((actualOutput - expectedOutput) * BigInt(10000) / expectedOutput) / 100;
-
-            return {
-              transactionType: route.transactionType,
-              aggregatorId: route.aggregatorId,
-              amountFrom: route.amountFrom,
-              amountTo: route.amountTo,
-              path: route.path,
-              route: route.route,
-              gasEstimate: route.gasEstimate,
-              outputAmountFormatted,
-              priceImpact,
-            };
-          });
-
-          setRoutes(processedRoutes);
-          setLoading(false);
-        }
-      } catch (err) {
-        if (!isCancelled) {
-          console.error('ETASwap API error:', err);
-          setError(err instanceof Error ? err.message : 'Failed to fetch routes');
-          setLoading(false);
-        }
-      }
-    }
-
-    fetchRoutes();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [fromToken, toToken, amount]);
-
-  return { routes, loading, error };
+  return useQuery({
+    queryKey: ['swapRoutes', fromToken?.id, toToken?.id, amount, slippageTolerance],
+    queryFn: () =>
+      fetchSwapRoutes({
+        fromToken: fromToken!,
+        toToken: toToken!,
+        amount,
+        balance,
+        slippageTolerance,
+      }),
+    enabled: !!(
+      fromToken &&
+      toToken &&
+      amount &&
+      parseFloat(amount) > 0
+    ),
+    staleTime: 30 * 1000, // 30s
+    gcTime: 5 * 60 * 1000, // 5min
+    refetchOnWindowFocus: true,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
 }
 
