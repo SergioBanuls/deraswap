@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { SwapCard } from '@/components/SwapCard';
 import { SwapRoutes } from '@/components/SwapRoutes';
 import { SettingsDialog } from '@/components/SettingsDialog';
@@ -8,6 +8,7 @@ import { Token } from '@/types/token';
 import { SwapRoute } from '@/types/route';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useSwapSettings } from '@/hooks/useSwapSettings';
+import { useTokens } from '@/hooks/useTokens';
 
 export default function Home() {
   const [fromToken, setFromToken] = useState<Token | null>(null);
@@ -17,8 +18,24 @@ export default function Home() {
   const [selectedRoute, setSelectedRoute] = useState<SwapRoute | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Fetch tokens list
+  const { data: tokens } = useTokens();
+
   // Swap settings (slippage, deadline)
   const { settings, setSlippageTolerance, enableAutoSlippage, getEffectiveSlippage } = useSwapSettings();
+
+  // Set default tokens (HBAR new and USDC) on mount
+  useEffect(() => {
+    if (tokens && tokens.length > 0 && !fromToken && !toToken) {
+      // WHBAR [new] token ID
+      const hbarToken = tokens.find(t => t.id === '0.0.1456986');
+      // USDC token ID on Hedera
+      const usdcToken = tokens.find(t => t.id === '0.0.456858');
+      
+      if (hbarToken) setFromToken(hbarToken);
+      if (usdcToken) setToToken(usdcToken);
+    }
+  }, [tokens, fromToken, toToken]);
 
   // Calculate effective slippage (auto or manual)
   const effectiveSlippage = getEffectiveSlippage(selectedRoute);

@@ -167,12 +167,12 @@ export const SwapCard = memo(function SwapCard({
           />
         </div>
 
-        {/* Slippage Indicator */}
-        {selectedRoute && effectiveSlippage !== undefined && (
-          <div className="mt-4 flex items-center justify-between px-3 py-2 bg-neutral-800/50 rounded-lg border border-neutral-700/50">
+        {/* Slippage Tolerance Display */}
+        {isConnected && (
+          <div className="mt-3 flex items-center justify-between px-3 py-2 bg-neutral-800/30 rounded-lg border border-neutral-700/30">
             <div className="flex items-center gap-2">
               <svg
-                className="w-4 h-4 text-white/50"
+                className="w-4 h-4 text-white/40"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -184,7 +184,7 @@ export const SwapCard = memo(function SwapCard({
                   d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span className="text-sm text-white/70">Slippage Tolerance</span>
+              <span className="text-xs text-white/60">Tolerancia al slippage</span>
             </div>
             <div className="flex items-center gap-2">
               {settings.autoSlippage && (
@@ -192,8 +192,8 @@ export const SwapCard = memo(function SwapCard({
                   Auto
                 </span>
               )}
-              <span className="text-sm font-medium text-white">
-                {effectiveSlippage.toFixed(2)}%
+              <span className="text-xs font-medium text-white/80">
+                {effectiveSlippage !== undefined ? effectiveSlippage.toFixed(2) : settings.slippageTolerance.toFixed(2)}%
               </span>
             </div>
           </div>
@@ -215,9 +215,6 @@ export const SwapCard = memo(function SwapCard({
             </button>
           ) : (
             <div className="space-y-3">
-              <div className="text-sm text-white/70 text-center">
-                Connected: {account}
-              </div>
               <button
                 onClick={handleSwap}
                 disabled={!canSwap}
