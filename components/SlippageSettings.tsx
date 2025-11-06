@@ -46,6 +46,13 @@ export function SlippageSettings({
     onChange(preset);
   };
 
+  const handleCustomClick = () => {
+    setShowCustom(true);
+    // Set the current value in the input
+    setCustomInput(value.toString());
+    setError(null);
+  };
+
   const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     setCustomInput(inputValue);
@@ -130,7 +137,7 @@ export function SlippageSettings({
 
         {/* Custom Button */}
         <button
-          onClick={() => setShowCustom(true)}
+          onClick={handleCustomClick}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             isCustomSelected
               ? 'bg-blue-500 text-white'

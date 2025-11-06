@@ -101,14 +101,27 @@ export function validateRoute(
     const fromAddr = '0x' + TokenId.fromString(fromTokenId).toSolidityAddress();
     const toAddr = '0x' + TokenId.fromString(toTokenId).toSolidityAddress();
 
-    if (firstToken.toLowerCase() !== fromAddr.toLowerCase()) {
+    // HBAR native address (0x0) - ETASwap sometimes returns this for HBAR
+    const HBAR_NATIVE = '0x0000000000000000000000000000000000000000';
+
+    // Check if first token matches (allowing HBAR native address)
+    const firstTokenMatches = 
+      firstToken.toLowerCase() === fromAddr.toLowerCase() ||
+      (fromToken.symbol === 'HBAR' && firstToken.toLowerCase() === HBAR_NATIVE.toLowerCase());
+
+    // Check if last token matches (allowing HBAR native address)
+    const lastTokenMatches = 
+      lastToken.toLowerCase() === toAddr.toLowerCase() ||
+      (toToken.symbol === 'HBAR' && lastToken.toLowerCase() === HBAR_NATIVE.toLowerCase());
+
+    if (!firstTokenMatches) {
       return {
         valid: false,
         reason: 'Route does not start with fromToken',
       };
     }
 
-    if (lastToken.toLowerCase() !== toAddr.toLowerCase()) {
+    if (!lastTokenMatches) {
       return {
         valid: false,
         reason: 'Route does not end with toToken',

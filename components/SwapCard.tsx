@@ -187,14 +187,15 @@ export const SwapCard = memo(function SwapCard({
               <span className="text-xs text-white/60">Tolerancia al slippage</span>
             </div>
             <div className="flex items-center gap-2">
-              {settings.autoSlippage && (
+              {settings.autoSlippage ? (
                 <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full">
                   Auto
                 </span>
+              ) : (
+                <span className="text-xs font-medium text-white/80">
+                  {settings.slippageTolerance.toFixed(2)}%
+                </span>
               )}
-              <span className="text-xs font-medium text-white/80">
-                {effectiveSlippage !== undefined ? effectiveSlippage.toFixed(2) : settings.slippageTolerance.toFixed(2)}%
-              </span>
             </div>
           </div>
         )}

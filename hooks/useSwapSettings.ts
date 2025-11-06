@@ -55,11 +55,20 @@ function saveSettings(settings: SwapSettings) {
 }
 
 /**
- * Calculate auto slippage
- * Auto mode uses a fixed 0.7% slippage tolerance
+ * Calculate auto slippage based on the selected route's price impact
+ * Auto mode calculates slippage dynamically to ensure the transaction succeeds
  */
 export function calculateAutoSlippage(route: SwapRoute | null): number {
-  return 0.7; // Fixed 0.7% for auto mode
+  if (!route) {
+    return 1.0; // Default 1% if no route
+  }
+  
+  // Use the absolute price impact as base, add a 0.5% buffer
+  const absoluteImpact = Math.abs(route.priceImpact);
+  const slippage = absoluteImpact + 0.5;
+  
+  // Cap at 15% for safety
+  return Math.min(Math.max(slippage, 0.5), 15);
 }
 
 export function useSwapSettings() {

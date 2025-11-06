@@ -121,6 +121,7 @@ export default function Home() {
                 toToken={toToken}
                 amount={debouncedAmount}
                 slippageTolerance={effectiveSlippage}
+                autoSlippage={settings.autoSlippage}
                 onRouteSelect={setSelectedRoute}
               />
             )}

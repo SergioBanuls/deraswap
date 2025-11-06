@@ -7,7 +7,7 @@
 
 'use client';
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useEffect } from 'react';
 import { Token } from '@/types/token';
 import { SwapRoute } from '@/types/route';
 import { useSwapRoutes } from '@/hooks/useSwapRoutes';
@@ -18,6 +18,7 @@ interface SwapRoutesProps {
   toToken: Token | null;
   amount: string;
   slippageTolerance: number;
+  autoSlippage?: boolean;
   onRouteSelect?: (route: SwapRoute) => void;
 }
 
@@ -36,9 +37,25 @@ function formatGasCost(gasEstimate: number): string {
   return costInDollars < 0.01 ? '<$0.01' : `$${costInDollars.toFixed(2)}`;
 }
 
-export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount, slippageTolerance, onRouteSelect }: SwapRoutesProps) {
-  const { data: routes, isLoading, error } = useSwapRoutes(fromToken, toToken, amount, undefined, slippageTolerance);
+export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount, slippageTolerance, autoSlippage, onRouteSelect }: SwapRoutesProps) {
+  const { data: routes, isLoading, error } = useSwapRoutes(fromToken, toToken, amount, undefined, slippageTolerance, autoSlippage);
   const [selectedRoute, setSelectedRoute] = useState<number>(0);
+
+  // Filter routes: if auto mode is enabled, show only the best route (first one)
+  const displayRoutes = autoSlippage && routes && routes.length > 0 ? [routes[0]] : routes;
+
+  // Auto-select the first route (cheapest) when routes are loaded
+  const handleAutoSelect = useCallback(() => {
+    if (routes && routes.length > 0 && onRouteSelect) {
+      setSelectedRoute(0);
+      onRouteSelect(routes[0]);
+    }
+  }, [routes, onRouteSelect]);
+
+  // Call auto-select when routes change
+  useEffect(() => {
+    handleAutoSelect();
+  }, [handleAutoSelect]);
 
   const handleSelectRoute = useCallback((index: number) => {
     setSelectedRoute(index);
@@ -73,11 +90,11 @@ export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount,
           </div>
         )}
 
-        {!isLoading && !error && (!routes || routes.length === 0) && (
+        {!isLoading && !error && (!displayRoutes || displayRoutes.length === 0) && (
           <div className="text-white/60 text-sm text-center py-4">No routes available</div>
         )}
 
-        {!isLoading && fromToken && toToken && routes && routes.map((route, index) => {
+        {!isLoading && fromToken && toToken && displayRoutes && displayRoutes.map((route, index) => {
         const isBestRoute = index === 0;
         const isSelected = index === selectedRoute;
 

@@ -34,14 +34,11 @@ export function SettingsDialog({
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40 animate-in fade-in duration-200"
+      {/* Dialog Container with Backdrop */}
+      <div 
+        className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/50 animate-in fade-in duration-200"
         onClick={() => onOpenChange(false)}
-      />
-
-      {/* Dialog */}
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
+      >
         <div
           className="bg-neutral-900 rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-top-4 duration-300"
           onClick={(e) => e.stopPropagation()}
@@ -83,7 +80,7 @@ export function SettingsDialog({
             <p className="text-sm text-blue-400">
               {settings.autoSlippage ? (
                 <>
-                  <span className="font-semibold">Auto mode</span> uses a fixed 0.7% slippage tolerance, which works well for most swaps. Switch to manual mode to set a custom value.
+                  <span className="font-semibold">Auto mode</span> finds the best route available and automatically calculates the optimal slippage based on the route's price impact.
                 </>
               ) : (
                 <>

@@ -163,17 +163,19 @@ export function useSwapRoutes(
   toToken: Token | null,
   amount: string,
   balance?: string,
-  slippageTolerance?: number
+  slippageTolerance?: number,
+  isAutoMode?: boolean
 ) {
   return useQuery({
-    queryKey: ['swapRoutes', fromToken?.id, toToken?.id, amount, slippageTolerance],
+    queryKey: ['swapRoutes', fromToken?.id, toToken?.id, amount, isAutoMode ? 'auto' : slippageTolerance],
     queryFn: () =>
       fetchSwapRoutes({
         fromToken: fromToken!,
         toToken: toToken!,
         amount,
         balance,
-        slippageTolerance,
+        // In auto mode, don't filter by slippage tolerance
+        slippageTolerance: isAutoMode ? undefined : slippageTolerance,
       }),
     enabled: !!(
       fromToken &&
