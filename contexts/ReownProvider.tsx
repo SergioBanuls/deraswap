@@ -4,8 +4,9 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { DAppConnector, HederaSessionEvent, HederaJsonRpcMethod } from '@hashgraph/hedera-wallet-connect/dist/lib';
 import { LedgerId } from '@hashgraph/sdk';
 
-// Obtener el Project ID de las variables de entorno
+// Obtener el Project ID y la red de las variables de entorno
 const PROJECT_ID = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || '';
+const HEDERA_NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
 const APP_METADATA = {
   name: 'DeraSwap - Hedera dApp',
   description: 'Una dApp de Hedera que usa HTS con Reown AppKit.',
@@ -18,6 +19,10 @@ enum HederaChainId {
   Testnet = 'hedera:testnet',
   Mainnet = 'hedera:mainnet'
 }
+
+// Determinar la red y el chain ID según la variable de entorno
+const getLedgerId = () => HEDERA_NETWORK === 'mainnet' ? LedgerId.MAINNET : LedgerId.TESTNET;
+const getChainId = () => HEDERA_NETWORK === 'mainnet' ? HederaChainId.Mainnet : HederaChainId.Testnet;
 
 interface ReownContextType {
   isConnected: boolean;
@@ -43,13 +48,18 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
     if (dAppConnector || typeof window === 'undefined') return dAppConnector;
     
     try {
+      const ledgerId = getLedgerId();
+      const chainId = getChainId();
+      
+      console.log(`🌐 Inicializando DAppConnector para ${HEDERA_NETWORK} (${chainId})`);
+      
       dAppConnector = new DAppConnector(
         APP_METADATA,
-        LedgerId.TESTNET, // o LedgerId.MAINNET
+        ledgerId,
         PROJECT_ID,
         Object.values(HederaJsonRpcMethod),
         [HederaSessionEvent.ChainChanged, HederaSessionEvent.AccountsChanged],
-        [HederaChainId.Testnet]
+        [chainId]
       );
 
       return dAppConnector;
