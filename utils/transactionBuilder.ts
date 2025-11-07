@@ -191,17 +191,55 @@ export async function buildSwapTransaction(
     deadlineNum,
   });
 
-  // Use path from route if available (ETASwap provides the correct path with fees)
-  // Path format for V2: [token0 (20 bytes), fee (3 bytes), token1 (20 bytes), ...]
+  // Use path from route if available
+  // Path format for V2: [token0 (20 bytes), fee (3 bytes), token1 (20 bytes), ...] (bytes)
+  // Path format for V1: [token0, token1, token2, ...] (address[]) - needs ABI encoding
   let pathBytes: Uint8Array;
-  
-  if (route.path && typeof route.path === 'string') {
-    // Use path directly from ETASwap API (already encoded)
-    console.log('📍 Using path from route:', route.path);
+
+  // Check if this is a V1 route (uses route field with address array)
+  const isV1Route = aggregatorId.startsWith('SaucerSwapV1');
+
+  if (isV1Route && Array.isArray(route.route) && route.route.length > 0) {
+    // V1 routes: simply concatenate addresses (20 bytes each), NO ABI encoding
+    // ETASwap's V1 adapter expects raw concatenated addresses
+    console.log('📍 V1 route detected, concatenating addresses:', route.route);
+
+    // IMPORTANT: Replace address(0) with WHBAR address for V1 routes
+    // ETASwap API returns 0x0000...0000 for HBAR, but V1 adapter expects WHBAR
+    const WHBAR_ADDRESS = '0x0000000000000000000000000000000000163B5A';
+    const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+
+    const correctedRoute = route.route.map((addr: string) => {
+      if (addr.toLowerCase() === ADDRESS_ZERO.toLowerCase()) {
+        console.log('🔄 Replacing address(0) with WHBAR address in V1 path');
+        return WHBAR_ADDRESS;
+      }
+      return addr;
+    });
+
+    console.log('📍 Corrected V1 route:', correctedRoute);
+
+    // Concatenate addresses without ABI encoding
+    const addressBytes: Uint8Array[] = [];
+    for (const addr of correctedRoute) {
+      addressBytes.push(hexToBytes(addr));
+    }
+
+    // Combine all address bytes
+    const totalLength = addressBytes.reduce((sum, arr) => sum + arr.length, 0);
+    pathBytes = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const bytes of addressBytes) {
+      pathBytes.set(bytes, offset);
+      offset += bytes.length;
+    }
+  } else if (route.path && typeof route.path === 'string') {
+    // V2 routes use the 'path' field (already encoded bytes)
+    console.log('📍 V2 route detected, using path from route:', route.path);
     pathBytes = hexToBytes(route.path);
   } else {
-    // Fallback: Build path manually (single hop with default 0.3% fee)
-    console.warn('⚠️ No path in route, building manually with 0.3% fee');
+    // Fallback: Build V2 path manually (single hop with default 0.3% fee)
+    console.warn('⚠️ No path in route, building V2 path manually with 0.3% fee');
     const fee = new Uint8Array([0x00, 0x0b, 0xb8]); // 3000 = 0.3% fee
     pathBytes = new Uint8Array([
       ...hexToBytes(tokenFromAddress),
@@ -209,8 +247,8 @@ export async function buildSwapTransaction(
       ...hexToBytes(tokenToAddress),
     ]);
   }
-  
-  console.log('📍 Path bytes length:', pathBytes.length);
+
+  console.log('📍 Path bytes length:', pathBytes.length, '(isV1:', isV1Route, ')');
 
   // Check if from token is HBAR
   const isTokenFromHBAR = fromToken.id === 'HBAR';

@@ -173,40 +173,18 @@ export function useSwapExecution() {
           throw new Error(validation.error || 'Invalid swap parameters');
         }
 
-        // Step 2: Ensure adapter has ALL path tokens associated (backend check)
+        // Step 2: Ensure adapter has fromToken and toToken associated (backend check)
+        // NOTE: We do NOT extract intermediate tokens from the path because:
+        // 1. ETASwap path format is NOT standard Uniswap V3 (token+fee+token)
+        // 2. Intermediate tokens might be pool addresses, not HTS tokens
+        // 3. The adapter handles path resolution internally
         updateState('ensuring_adapter_tokens');
-        
+
         const tokensToCheck: string[] = [];
         if (params.fromToken.id !== 'HBAR') tokensToCheck.push(params.fromToken.id);
         if (params.toToken.id !== 'HBAR') tokensToCheck.push(params.toToken.id);
-        
-        // Extract intermediate tokens from path (for SaucerSwapV2)
-        const aggregatorId = Array.isArray(params.route.aggregatorId) 
-          ? params.route.aggregatorId[0] 
-          : params.route.aggregatorId;
-          
-        if (aggregatorId.startsWith('SaucerSwapV2') && params.route.path) {
-          console.log('🔍 Extracting tokens from path:', params.route.path);
-          
-          // Handle path (can be string or array)
-          const pathStr = Array.isArray(params.route.path) 
-            ? params.route.path[0] 
-            : params.route.path;
-            
-          const pathTokens = extractTokensFromPath(pathStr);
-          console.log('📍 Path tokens found:', pathTokens);
-          
-          // Convert EVM addresses to Hedera token IDs
-          for (const evmAddress of pathTokens) {
-            const tokenId = evmAddressToTokenId(evmAddress);
-            // Skip HBAR/WHBAR and already included tokens
-            if (tokenId !== '0.0.1456986' && !tokensToCheck.includes(tokenId)) {
-              tokensToCheck.push(tokenId);
-            }
-          }
-          
-          console.log('🔍 All tokens to check (including path):', tokensToCheck);
-        }
+
+        console.log('🔍 Tokens to check for adapter association:', tokensToCheck);
         
         if (tokensToCheck.length > 0) {
           console.log('🔍 Checking adapter token associations:', tokensToCheck);

@@ -28,7 +28,7 @@ export default function Home() {
   const { data: tokens } = useTokens();
   
   // Fetch token balances for connected account
-  const { balances } = useTokenBalances(account || null);
+  const { balances, loading: balancesLoading } = useTokenBalances(account || null);
   
   // Debug: log balances
   useEffect(() => {
@@ -39,19 +39,34 @@ export default function Home() {
   }, [balances, fromToken]);
   
   // Get balance for the from token
-  // Check multiple possible keys: token.id, HBAR, or token.symbol
-  const fromTokenBalance = fromToken 
-    ? (balances[fromToken.id] || 
-       (fromToken.symbol === 'HBAR' ? balances['HBAR'] : undefined) ||
-       (fromToken.symbol === 'WHBAR' ? balances['HBAR'] : undefined))
-    : undefined;
+  // Check multiple possible keys: token.id or HBAR special case
+  // Return "0" if token is selected but has no balance (not associated or 0 balance)
+  const fromTokenBalance = (() => {
+    if (!fromToken) return undefined;
+    if (balancesLoading) return undefined;  // Still loading
+
+    // Try to get balance by token ID
+    const balanceByTokenId = balances[fromToken.id];
+    if (balanceByTokenId !== undefined) return balanceByTokenId;
+
+    // Special case for HBAR
+    if (fromToken.symbol === 'HBAR') {
+      const hbarBalance = balances['HBAR'];
+      if (hbarBalance !== undefined) return hbarBalance;
+    }
+
+    // Token not found in balances = not associated or 0 balance
+    return "0";
+  })();
     
   // Debug: log the balance we're using
   useEffect(() => {
     if (fromToken) {
       console.log('💵 Balance para', fromToken.symbol, ':', fromTokenBalance);
+      console.log('   - balancesLoading:', balancesLoading);
+      console.log('   - balance type:', typeof fromTokenBalance);
     }
-  }, [fromToken, fromTokenBalance]);
+  }, [fromToken, fromTokenBalance, balancesLoading]);
 
   // Swap settings (slippage, deadline)
   const { settings, setSlippageTolerance, enableAutoSlippage, getEffectiveSlippage } = useSwapSettings();

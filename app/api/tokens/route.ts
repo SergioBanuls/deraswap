@@ -86,12 +86,23 @@ export async function GET(request: Request) {
     
     // Filter out WHBAR [old] (0.0.1062664) - not supported in V2 pools
     // Only keep WHBAR [new] (0.0.1456986)
-    const filteredTokens = tokens.filter((token: any) => {
-      // Remove old WHBAR
-      if (token.id === '0.0.1062664') return false;
-      return true;
-    });
-    
+    const filteredTokens = tokens
+      .filter((token: any) => {
+        // Remove old WHBAR
+        if (token.id === '0.0.1062664') return false;
+        return true;
+      })
+      .map((token: any) => {
+        // Fix wHBAR symbol (SaucerSwap API returns it as "HBAR" which conflicts with native HBAR)
+        if (token.id === '0.0.1456986') {
+          return {
+            ...token,
+            symbol: 'WHBAR',  // Change from "HBAR" to "WHBAR"
+          };
+        }
+        return token;
+      });
+
     return NextResponse.json([nativeHBAR, ...filteredTokens]);
   } catch (error) {
     console.error('Error fetching tokens:', error);

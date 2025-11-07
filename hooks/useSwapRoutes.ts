@@ -24,6 +24,7 @@ import { filterValidRoutes, DEFAULT_ROUTE_CONFIG } from '@/utils/routeValidation
 
 const ETASWAP_API_BASE_URL = 'https://api.etaswap.com/v1';
 const WHBAR_TOKEN_ID = '0.0.1456986';
+const USDC_TOKEN_ID = '0.0.456858';  // USDC - most liquid stablecoin
 
 interface FetchRoutesParams {
   fromToken: Token;
@@ -31,6 +32,87 @@ interface FetchRoutesParams {
   amount: string;
   balance?: string;
   slippageTolerance?: number;
+}
+
+/**
+ * Try to find a route via USDC as intermediary token
+ * Returns a synthetic route that represents: fromToken → USDC → toToken
+ */
+async function tryRouteViaUSDC(
+  fromToken: Token,
+  toToken: Token,
+  inputAmount: string
+): Promise<SwapRoute[] | null> {
+  // Don't try if either token is USDC itself
+  if (fromToken.id === USDC_TOKEN_ID || toToken.id === USDC_TOKEN_ID) {
+    return null;
+  }
+
+  try {
+    // Convert token IDs to EVM addresses
+    const fromTokenAddress = fromToken.id === 'HBAR'
+      ? '0x0000000000000000000000000000000000000000'
+      : '0x' + TokenId.fromString(fromToken.id).toSolidityAddress();
+
+    const toTokenAddress = toToken.id === 'HBAR'
+      ? '0x0000000000000000000000000000000000000000'
+      : '0x' + TokenId.fromString(toToken.id).toSolidityAddress();
+
+    const usdcAddress = '0x' + TokenId.fromString(USDC_TOKEN_ID).toSolidityAddress();
+
+    // Step 1: Get route from fromToken → USDC
+    console.log(`  📍 Step 1: ${fromToken.symbol} → USDC`);
+    const step1Response = await axios.get(`${ETASWAP_API_BASE_URL}/rates`, {
+      params: {
+        tokenFrom: fromTokenAddress,
+        tokenTo: usdcAddress,
+        amount: inputAmount,
+        isReverse: false,
+      },
+    });
+
+    const step1Routes = step1Response.data?.filter((r: any) => r.aggregatorId === 'SaucerSwapV2') || [];
+    if (step1Routes.length === 0) {
+      console.log('  ❌ No V2 route for step 1');
+      return null;
+    }
+
+    // Use the best route from step 1
+    const step1Route = step1Routes[0];
+    const usdcAmount = Array.isArray(step1Route.amountTo)
+      ? step1Route.amountTo.reduce((sum: string, amt: string) => (BigInt(sum) + BigInt(amt)).toString(), '0')
+      : step1Route.amountTo;
+
+    // Step 2: Get route from USDC → toToken
+    console.log(`  📍 Step 2: USDC → ${toToken.symbol} (amount: ${usdcAmount})`);
+    const step2Response = await axios.get(`${ETASWAP_API_BASE_URL}/rates`, {
+      params: {
+        tokenFrom: usdcAddress,
+        tokenTo: toTokenAddress,
+        amount: usdcAmount,
+        isReverse: false,
+      },
+    });
+
+    const step2Routes = step2Response.data?.filter((r: any) => r.aggregatorId === 'SaucerSwapV2') || [];
+    if (step2Routes.length === 0) {
+      console.log('  ❌ No V2 route for step 2');
+      return null;
+    }
+
+    console.log(`  ✅ Found 2-step route: ${fromToken.symbol} → USDC → ${toToken.symbol}`);
+
+    // Return note: For now, we just inform the user
+    // TODO: Implement actual 2-step swap execution
+    console.warn('⚠️  2-step swaps not yet implemented. Please swap manually:');
+    console.warn(`   1. ${fromToken.symbol} → USDC`);
+    console.warn(`   2. USDC → ${toToken.symbol}`);
+
+    return null;  // Don't return route yet, need to implement execution first
+  } catch (error) {
+    console.error('Error trying route via USDC:', error);
+    return null;
+  }
 }
 
 async function fetchSwapRoutes({
@@ -92,31 +174,36 @@ async function fetchSwapRoutes({
   const aggregators = etaRoutes.map((r: any) => r.aggregatorId);
   console.log('Available aggregators from ETASwap:', [...new Set(aggregators)]);
   
-  // Try SaucerSwapV2 first, fallback to SaucerSwap (V1) if needed
-  let saucerRoutes = etaRoutes.filter((route: any) => 
-    route.aggregatorId === 'SaucerSwapV2'
+  // Accept BOTH V1 and V2 routes (we have adapters for both)
+  let saucerRoutes = etaRoutes.filter((route: any) =>
+    route.aggregatorId === 'SaucerSwapV2' || route.aggregatorId === 'SaucerSwapV1'
   );
-  
-  // If no V2 routes, try V1 (they use the same router)
-  if (saucerRoutes.length === 0) {
-    console.warn('No SaucerSwapV2 routes, trying SaucerSwap V1...');
-    saucerRoutes = etaRoutes.filter((route: any) => 
-      route.aggregatorId === 'SaucerSwap' || route.aggregatorId === 'SaucerSwapV1'
-    );
-  }
 
-  // Cambiar el aggregatorId a nuestro nombre registrado
-  // EXACT2 = 100% EXACTO como ETASwap (código + configuración)
+  // Map to our registered adapter names
   saucerRoutes.forEach((route: any) => {
-    route.aggregatorId = 'SaucerSwapV2_EXACT2';
+    if (route.aggregatorId === 'SaucerSwapV2') {
+      route.aggregatorId = 'SaucerSwapV2_EXACT2';
+    } else if (route.aggregatorId === 'SaucerSwapV1') {
+      route.aggregatorId = 'SaucerSwapV1_v2';
+    }
   });
 
-  console.log(`Filtered to SaucerSwap routes: ${saucerRoutes.length}/${etaRoutes.length} routes`);
+  console.log(`Filtered to SaucerSwap routes: ${saucerRoutes.length}/${etaRoutes.length} routes (V1 + V2)`);
 
   if (saucerRoutes.length === 0) {
-    console.warn('No SaucerSwap routes available. ETASwap returned other DEXs that are not supported.');
+    console.warn('No SaucerSwap routes available. ETASwap returned other DEXs or mixed routes.');
     console.warn('Available routes:', etaRoutes.map((r: any) => ({ aggregator: r.aggregatorId, pools: r.pools?.length })));
-    throw new Error('No compatible routes found. Only SaucerSwap is supported.');
+
+    // Try to find route via USDC as intermediary
+    console.log('🔄 Attempting to find route via USDC...');
+    const alternativeRoute = await tryRouteViaUSDC(fromToken, toToken, inputAmount);
+
+    if (alternativeRoute) {
+      console.log('✅ Found alternative route via USDC');
+      return alternativeRoute;
+    }
+
+    throw new Error('No compatible routes found. Try swapping in 2 steps: ' + fromToken.symbol + ' → USDC → ' + toToken.symbol);
   }
 
   // Process routes and add computed fields

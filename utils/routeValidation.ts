@@ -26,6 +26,7 @@ export const DEFAULT_ROUTE_CONFIG: RouteValidationConfig = {
   trustedAggregators: [
     'SaucerSwap',
     'SaucerSwapV1',
+    'SaucerSwapV1_v2', // v2: Redeployed with Path library fix ✅ ACTIVE!
     'SaucerSwapV2',
     'SaucerSwapV2_V5', // v5: Direct HBAR transfer (failed)
     'SaucerSwapV2_V8', // v8: Fixed transferFrom (no admin key)
