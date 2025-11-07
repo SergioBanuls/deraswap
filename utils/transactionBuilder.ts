@@ -141,13 +141,17 @@ export async function buildSwapTransaction(
   const { route, fromToken, toToken, inputAmount, settings, userAccountId, signer } = params;
   const router = getActiveRouter();
 
-  // Get network to determine node account
+  // Check if we're doing an HBAR swap with signer
+  const isHbarSwapWithSigner = fromToken.id === 'HBAR' && signer;
+
+  // Get network to determine node account (only if NOT using signer)
   const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
   const nodeAccountId = AccountId.fromString(network === 'mainnet' ? '0.0.3' : '0.0.3');
 
-  // Create transaction ID
+  // Create transaction ID (only if NOT using signer)
+  // When using freezeWithSigner, the signer populates transactionId automatically
   const operatorId = AccountId.fromString(userAccountId);
-  const transactionId = TransactionId.generate(operatorId);
+  const transactionId = isHbarSwapWithSigner ? null : TransactionId.generate(operatorId);
 
   // Get aggregator ID
   const aggregatorId = getAggregatorId(route);
@@ -223,16 +227,29 @@ export async function buildSwapTransaction(
   console.log('✅ All parameters added successfully');
 
   // Create contract execute transaction with explicit gas
-  const gasLimit = route.gasEstimate || 2000000; // Very high gas limit
-  console.log('⛽ Setting gas limit:', gasLimit);
-  
-  const transaction = new ContractExecuteTransaction()
-    .setTransactionId(transactionId)
+  // Add 50% buffer to gas estimate for safety (especially for HBAR swaps)
+  const baseGas = route.gasEstimate || 500000;
+  const gasLimit = Math.floor(baseGas * 1.5);
+  console.log('⛽ Setting gas limit:', gasLimit, '(base:', baseGas, '+50%)');
+
+  // Build transaction - different approach for signer vs non-signer
+  let transaction = new ContractExecuteTransaction()
     .setContractId(router.hederaId)
-    .setNodeAccountIds([nodeAccountId])
     .setGas(gasLimit)
-    .setMaxTransactionFee(new Hbar(20)) // Very high max fee
     .setFunction('swap', functionParams);
+
+  // IMPORTANT: freezeWithSigner needs nodeAccountIds but NOT transactionId
+  // - nodeAccountIds: must be set manually
+  // - transactionId: populated automatically by signer
+  // - maxTransactionFee: optional for signer
+  if (isHbarSwapWithSigner) {
+    transaction = transaction.setNodeAccountIds([nodeAccountId]);
+  } else {
+    transaction = transaction
+      .setTransactionId(transactionId!)
+      .setNodeAccountIds([nodeAccountId])
+      .setMaxTransactionFee(new Hbar(20));
+  }
 
   // If swapping from HBAR, attach HBAR value
   if (fromToken.id === 'HBAR') {
