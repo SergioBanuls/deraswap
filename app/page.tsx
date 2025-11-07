@@ -59,11 +59,11 @@ export default function Home() {
   // Set default tokens (HBAR new and USDC) on mount
   useEffect(() => {
     if (tokens && tokens.length > 0 && !fromToken && !toToken) {
-      // WHBAR [new] token ID
-      const hbarToken = tokens.find(t => t.id === '0.0.1456986');
+      // HBAR native (not wHBAR) - so users can swap using HBAR directly
+      const hbarToken = tokens.find(t => t.id === 'HBAR');
       // USDC token ID on Hedera
       const usdcToken = tokens.find(t => t.id === '0.0.456858');
-      
+
       if (hbarToken) setFromToken(hbarToken);
       if (usdcToken) setToToken(usdcToken);
     }

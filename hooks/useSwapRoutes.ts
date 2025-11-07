@@ -49,15 +49,16 @@ async function fetchSwapRoutes({
   // Use validated/sanitized amount
   const inputAmount = validation.sanitized!;
 
-  // Handle HBAR → WHBAR conversion
-  const fromTokenId = fromToken.id === 'HBAR' ? WHBAR_TOKEN_ID : fromToken.id;
-  const toTokenId = toToken.id === 'HBAR' ? WHBAR_TOKEN_ID : toToken.id;
+  // IMPORTANT: ETASwap API expects address zero for HBAR native, NOT wHBAR
+  // We must NOT convert HBAR to wHBAR when querying the API
+  // The adapter will handle HBAR → wHBAR conversion internally
+  const tokenFromAddress = fromToken.id === 'HBAR'
+    ? '0x0000000000000000000000000000000000000000'  // HBAR native
+    : '0x' + TokenId.fromString(fromToken.id).toSolidityAddress();
 
-  // Convert token IDs to Solidity addresses
-  const tokenFromAddress =
-    '0x' + TokenId.fromString(fromTokenId).toSolidityAddress();
-  const tokenToAddress =
-    '0x' + TokenId.fromString(toTokenId).toSolidityAddress();
+  const tokenToAddress = toToken.id === 'HBAR'
+    ? '0x0000000000000000000000000000000000000000'  // HBAR native
+    : '0x' + TokenId.fromString(toToken.id).toSolidityAddress();
 
   // Fetch routes from ETASwap API
   const url = `${ETASWAP_API_BASE_URL}/rates`;

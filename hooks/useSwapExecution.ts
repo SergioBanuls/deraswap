@@ -150,6 +150,19 @@ export function useSwapExecution() {
       try {
         // Step 1: Validate parameters
         updateState('validating');
+
+        // DEBUG: Log token IDs
+        console.log('🔍 DEBUG fromToken:', {
+          id: params.fromToken.id,
+          symbol: params.fromToken.symbol,
+          name: params.fromToken.name
+        });
+        console.log('🔍 DEBUG toToken:', {
+          id: params.toToken.id,
+          symbol: params.toToken.symbol,
+          name: params.toToken.name
+        });
+
         const txParams: SwapTransactionParams = {
           ...params,
           userAccountId: account,

@@ -21,7 +21,7 @@ import {
 
 // Both Exchange and Adapter need tokens associated
 const EXCHANGE_CONTRACT_ID = process.env.NEXT_PUBLIC_CUSTOM_ROUTER_HEDERA_ID || '0.0.10086948';
-const ADAPTER_CONTRACT_ID = '0.0.10087392'; // v9: FIXED transferFrom + admin key for token associations
+const ADAPTER_CONTRACT_ID = process.env.SAUCERSWAP_V2_ADAPTER_EXACT_ID || '0.0.10087551'; // EXACT2: 100% ETASwap config
 const OPERATOR_ID = process.env.HEDERA_ACCOUNT_ID!;
 const OPERATOR_KEY = process.env.PRIVATE_KEY!;
 const NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'mainnet';
