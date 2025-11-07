@@ -27,6 +27,13 @@ export const DEFAULT_ROUTE_CONFIG: RouteValidationConfig = {
     'SaucerSwap',
     'SaucerSwapV1',
     'SaucerSwapV2',
+    'SaucerSwapV2_V5', // v5: Direct HBAR transfer (failed)
+    'SaucerSwapV2_V8', // v8: Fixed transferFrom (no admin key)
+    'SaucerSwapV2_V9', // v9: Fixed transferFrom + admin key
+    'SaucerSwapV2_V10', // v10: Correct wHBAR address (0x163b5a) - no auto associations
+    'SaucerSwapV2_V12', // v12: Auto token associations enabled + correct wHBAR
+    'SaucerSwapV2_EXACT', // EXACT: Código exacto ETASwap - missing auto-associations
+    'SaucerSwapV2_EXACT2', // EXACT2: 100% EXACTO como ETASwap ✅ ACTIVE!
     'Pangolin',
     'HeliSwap',
     'ETASwap',

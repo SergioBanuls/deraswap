@@ -1,0 +1,55 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "TestNoParams",
+  "sourceName": "contracts/solidity/TestNoParams.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "getValue",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "value",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b50600080546001600160a01b03191633179055602a60015560bf806100366000396000f3fe6080604052348015600f57600080fd5b5060043610603c5760003560e01c8063209652551460415780633fa4f2451460585780638da5cb5b146060575b600080fd5b6001545b6040519081526020015b60405180910390f35b604560015481565b6000546072906001600160a01b031681565b6040516001600160a01b039091168152602001604f56fea26469706673582212200f3a2305ca05df13f203f1043f2f45b95228b81ddd256fbd3cf2e0fff23fdb2164736f6c63430008130033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b5060043610603c5760003560e01c8063209652551460415780633fa4f2451460585780638da5cb5b146060575b600080fd5b6001545b6040519081526020015b60405180910390f35b604560015481565b6000546072906001600160a01b031681565b6040516001600160a01b039091168152602001604f56fea26469706673582212200f3a2305ca05df13f203f1043f2f45b95228b81ddd256fbd3cf2e0fff23fdb2164736f6c63430008130033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

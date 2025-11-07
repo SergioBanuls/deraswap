@@ -1,0 +1,19 @@
+{
+  "name": "deraswap-contracts",
+  "version": "1.0.0",
+  "description": "Custom ETASwap contracts with modified fee destination",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:testnet": "hardhat run scripts/deploy-exchange.js --network testnet",
+    "deploy:mainnet": "hardhat run scripts/deploy-exchange.js --network mainnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@openzeppelin/contracts": "^4.9.3",
+    "hardhat": "^2.19.0"
+  },
+  "dependencies": {
+    "@hashgraph/sdk": "^2.38.0"
+  }
+}

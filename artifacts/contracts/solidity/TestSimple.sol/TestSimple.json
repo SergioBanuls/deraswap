@@ -1,0 +1,102 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "TestSimple",
+  "sourceName": "contracts/solidity/TestSimple.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address payable",
+          "name": "_feeWallet",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_router",
+          "type": "address"
+        },
+        {
+          "internalType": "uint16",
+          "name": "_fee",
+          "type": "uint16"
+        },
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "fee",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "feeWallet",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getFee",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "router",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "token",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b5060405161022a38038061022a83398101604081905261002f916100a2565b600080546001600160a01b039586166001600160a01b0319918216179091556001805461ffff909416600160a01b026001600160b01b0319909416948616949094179290921790925560028054929093169116179055610108565b6001600160a01b038116811461009f57600080fd5b50565b600080600080608085870312156100b857600080fd5b84516100c38161008a565b60208601519094506100d48161008a565b604086015190935061ffff811681146100ec57600080fd5b60608601519092506100fd8161008a565b939692955090935050565b610113806101176000396000f3fe6080604052348015600f57600080fd5b506004361060505760003560e01c8063ced72f87146055578063ddca3f4314607c578063f25f4b56146090578063f887ea401460b9578063fc0c546a1460cb575b600080fd5b600154600160a01b900461ffff165b60405161ffff90911681526020015b60405180910390f35b600154606490600160a01b900461ffff1681565b60005460a2906001600160a01b031681565b6040516001600160a01b0390911681526020016073565b60015460a2906001600160a01b031681565b60025460a2906001600160a01b03168156fea26469706673582212205dc7461547c44436cc703f4dac19d0a9a0fba3b34a246e5bb83e150cab4752c864736f6c63430008130033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060505760003560e01c8063ced72f87146055578063ddca3f4314607c578063f25f4b56146090578063f887ea401460b9578063fc0c546a1460cb575b600080fd5b600154600160a01b900461ffff165b60405161ffff90911681526020015b60405180910390f35b600154606490600160a01b900461ffff1681565b60005460a2906001600160a01b031681565b6040516001600160a01b0390911681526020016073565b60015460a2906001600160a01b031681565b60025460a2906001600160a01b03168156fea26469706673582212205dc7461547c44436cc703f4dac19d0a9a0fba3b34a246e5bb83e150cab4752c864736f6c63430008130033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

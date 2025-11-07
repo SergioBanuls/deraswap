@@ -33,6 +33,9 @@ interface SwapCardProps {
   onSwapTokens: () => void;
   dialogType: 'from' | 'to' | null;
   onDialogChange: (type: 'from' | 'to' | null) => void;
+  fromTokenBalance?: string; // Balance of the from token in raw units
+  hasBalanceError?: boolean; // Whether there's insufficient balance
+  onBalanceError?: (hasError: boolean) => void; // Callback for balance error state
 }
 
 export const SwapCard = memo(function SwapCard({
@@ -49,6 +52,9 @@ export const SwapCard = memo(function SwapCard({
   onSwapTokens,
   dialogType,
   onDialogChange,
+  fromTokenBalance,
+  hasBalanceError,
+  onBalanceError,
 }: SwapCardProps) {
   const { connect, isConnected, account, loading } = useReownConnect();
   const { executeSwap, isExecuting, stepMessage, currentStep, explorerUrl, monitoringProgress } = useSwapExecution();
@@ -64,16 +70,26 @@ export const SwapCard = memo(function SwapCard({
 
   // Handle swap execution
   const handleSwap = useCallback(async () => {
+    console.log('🔵 handleSwap called');
+    console.log('  fromToken:', fromToken?.symbol);
+    console.log('  toToken:', toToken?.symbol);
+    console.log('  amount:', amount);
+    console.log('  selectedRoute:', selectedRoute?.aggregatorId);
+    
     if (!fromToken || !toToken || !amount || !selectedRoute) {
+      console.log('❌ Missing required fields');
       return;
     }
 
     // Validate and convert amount to raw units
     const validation = validateAmount(amount, fromToken.decimals);
     if (!validation.valid || !validation.sanitized) {
+      console.log('❌ Amount validation failed');
       return;
     }
 
+    console.log('✅ Starting swap execution...');
+    
     // Use effective slippage if provided, otherwise use settings value
     const slippage = effectiveSlippage !== undefined ? effectiveSlippage : settings.slippageTolerance;
 
@@ -96,7 +112,8 @@ export const SwapCard = memo(function SwapCard({
     amount &&
     parseFloat(amount) > 0 &&
     selectedRoute &&
-    !isExecuting;
+    !isExecuting &&
+    !hasBalanceError; // Disable if insufficient balance
 
   return (
     <div className="w-full">
@@ -164,6 +181,8 @@ export const SwapCard = memo(function SwapCard({
             onAmountChange={onAmountChange}
             token={fromToken}
             disabled={!fromToken}
+            balance={fromTokenBalance}
+            onBalanceError={onBalanceError}
           />
         </div>
 

@@ -1,34 +1,64 @@
 /**
- * API Route Handler for fetching individual token price from SaucerSwap
+ * API Route Handler for fetching individual token price
  *
- * This route protects the API key by keeping it server-side only.
- * Accepts tokenId as a dynamic parameter.
- *
- * Rate Limiting Strategy:
- * - Implements request throttling to prevent 429 errors
- * - Adds minimum delay between requests to same endpoint
- * - Caches responses for 60 seconds
+ * Returns mock prices for testnet tokens
+ * For mainnet, fetches real prices from SaucerSwap API
  */
 
 import { NextResponse } from 'next/server';
 
-const API_KEY = process.env.SAUCERSWAP_PRICE_API_KEY;
-const MIN_REQUEST_INTERVAL = 200; // Minimum 200ms between requests to same token
+const SAUCERSWAP_API_URL = 'https://api.saucerswap.finance/tokens/known';
+const API_KEY = process.env.SAUCERSWAP_API_KEY;
+const HEDERA_NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
 
-// In-memory cache for request throttling
-const lastRequestTime = new Map<string, number>();
+// Mock prices for testnet tokens
+const TESTNET_PRICES: Record<string, number> = {
+  'HBAR': 0.10,
+  '0.0.429274': 1.00, // USDC
+};
 
-async function throttleRequest(tokenId: string): Promise<void> {
-  const now = Date.now();
-  const lastTime = lastRequestTime.get(tokenId) || 0;
-  const timeSinceLastRequest = now - lastTime;
+// Cache for mainnet token prices (5 minutes)
+let mainnetPriceCache: Record<string, { price: number; timestamp: number }> = {};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-    const delay = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
-    await new Promise(resolve => setTimeout(resolve, delay));
+async function fetchMainnetPrice(tokenId: string): Promise<number> {
+  // Check cache first
+  const cached = mainnetPriceCache[tokenId];
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.price;
   }
 
-  lastRequestTime.set(tokenId, Date.now());
+  if (!API_KEY) {
+    console.error('SAUCERSWAP_API_KEY not configured');
+    return 0;
+  }
+
+  try {
+    const response = await fetch(SAUCERSWAP_API_URL, {
+      headers: { 'x-api-key': API_KEY },
+    });
+
+    if (!response.ok) {
+      console.error(`SaucerSwap API error: ${response.status}`);
+      return 0;
+    }
+
+    const tokens = await response.json();
+    const token = tokens.find((t: any) => t.id === tokenId || t.symbol === tokenId);
+    
+    const price = token?.priceUsd || 0;
+
+    // Update cache
+    mainnetPriceCache[tokenId] = {
+      price,
+      timestamp: Date.now(),
+    };
+
+    return price;
+  } catch (error) {
+    console.error('Error fetching mainnet price:', error);
+    return 0;
+  }
 }
 
 export async function GET(
@@ -37,14 +67,6 @@ export async function GET(
 ) {
   const { tokenId } = await params;
 
-  if (!API_KEY) {
-    console.error('SAUCERSWAP_PRICE_API_KEY is not configured');
-    return NextResponse.json(
-      { error: 'API key not configured' },
-      { status: 500 }
-    );
-  }
-
   if (!tokenId) {
     return NextResponse.json(
       { error: 'Token ID is required' },
@@ -52,41 +74,16 @@ export async function GET(
     );
   }
 
-  try {
-    // Throttle requests to prevent rate limiting
-    await throttleRequest(tokenId);
+  let priceUsd = 0;
 
-    const response = await fetch(
-      `https://api.saucerswap.finance/tokens/${tokenId}`,
-      {
-        headers: {
-          'x-api-key': API_KEY,
-        },
-        // Increased cache to 60 seconds to reduce API calls
-        next: { revalidate: 60 },
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.warn(`Rate limited for token ${tokenId}, returning stale data`);
-        // Return a specific error that the client can handle
-        return NextResponse.json(
-          { error: 'Rate limited', code: 429 },
-          { status: 429 }
-        );
-      }
-      throw new Error(`SaucerSwap API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error(`Error fetching price for token ${tokenId}:`, error);
-    return NextResponse.json(
-      { error: 'Failed to fetch token price' },
-      { status: 500 }
-    );
+  if (HEDERA_NETWORK === 'mainnet') {
+    priceUsd = await fetchMainnetPrice(tokenId);
+  } else {
+    priceUsd = TESTNET_PRICES[tokenId] || 0;
   }
+
+  return NextResponse.json({
+    id: tokenId,
+    priceUsd,
+  });
 }

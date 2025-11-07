@@ -9,6 +9,7 @@
  */
 
 import { AccountId, TokenId, AccountAllowanceApproveTransaction, TransactionId } from '@hashgraph/sdk';
+import Long from 'long';
 import { getActiveRouter } from '@/config/contracts';
 
 export interface AllowanceStatus {
@@ -92,6 +93,13 @@ export function buildApprovalTransaction(params: ApprovalParams): Uint8Array {
   const { tokenId, amount, ownerAccountId } = params;
   const router = getActiveRouter();
 
+  console.log('🔐 Building approval transaction:', {
+    tokenId,
+    amount,
+    ownerAccountId,
+    routerAddress: router.address,
+  });
+
   // Get network to determine node account
   const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
   const nodeAccountId = network === 'mainnet'
@@ -109,7 +117,7 @@ export function buildApprovalTransaction(params: ApprovalParams): Uint8Array {
       TokenId.fromString(tokenId),
       AccountId.fromString(ownerAccountId),
       AccountId.fromEvmAddress(0, 0, router.address),
-      parseInt(amount)
+      Long.fromString(amount)
     )
     .setNodeAccountIds([nodeAccountId]);
 

@@ -1,16 +1,16 @@
 /**
  * Transaction Monitor for Hedera Network
  *
- * Monitors transaction status using Validation Cloud Mirror Node.
+ * Monitors transaction status using Hedera Mirror Node.
  * Implements polling strategy with exponential backoff to track
  * transaction consensus and final status.
  */
 
-const VALIDATION_CLOUD_BASE_URL =
-  process.env.NEXT_PUBLIC_VALIDATION_CLOUD_BASE_URL ||
-  'https://mainnet.hedera.validationcloud.io/v1';
+const HEDERA_NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
 
-const VALIDATION_CLOUD_API_KEY = process.env.VALIDATION_CLOUD_API_KEY || '';
+const MIRROR_NODE_URL = HEDERA_NETWORK === 'mainnet'
+  ? 'https://mainnet.mirrornode.hedera.com'
+  : 'https://testnet.mirrornode.hedera.com';
 
 // Polling configuration
 const MAX_POLLING_ATTEMPTS = 30; // Maximum number of polling attempts
@@ -42,18 +42,21 @@ export interface MirrorNodeTransaction {
  * - With @ separator: "0.0.1234@1234567890.123456789"
  * - With - separator: "0.0.1234-1234567890-123456789"
  *
- * Mirror Node API expects format: accountId@seconds.nanos or accountId-seconds-nanos
+ * Mirror Node API expects format with - separator for REST API
  *
  * @param txId - Transaction ID in any format
- * @returns Normalized transaction ID
+ * @returns Normalized transaction ID with - separators
  */
 function normalizeTransactionId(txId: string): string {
-  // If already has @ or -, return as is
-  if (txId.includes('@') || txId.includes('-')) {
-    return txId;
+  // Convert @ to - for Mirror Node API
+  // "0.0.1234@1234567890.123456789" -> "0.0.1234-1234567890-123456789"
+  if (txId.includes('@')) {
+    const [accountId, timestamp] = txId.split('@');
+    const [seconds, nanos] = timestamp.split('.');
+    return `${accountId}-${seconds}-${nanos}`;
   }
 
-  // Otherwise assume it's just the timestamp part and needs formatting
+  // If already has -, return as is
   return txId;
 }
 
@@ -68,15 +71,11 @@ async function queryMirrorNode(
 ): Promise<MirrorNodeTransaction | null> {
   try {
     const normalizedId = normalizeTransactionId(transactionId);
-    const url = `${VALIDATION_CLOUD_BASE_URL}/api/v1/transactions/${normalizedId}`;
+    const url = `${MIRROR_NODE_URL}/api/v1/transactions/${normalizedId}`;
 
     console.log('Querying Mirror Node:', url);
 
-    const response = await fetch(url, {
-      headers: {
-        'x-api-key': VALIDATION_CLOUD_API_KEY,
-      },
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       if (response.status === 404) {

@@ -1,12 +1,13 @@
 /**
  * Header Component
  *
- * Top navigation bar with logo and wallet info.
+ * Top navigation bar with logo, network switcher, and wallet info.
  */
 
 'use client';
 
 import { WalletInfo } from './WalletInfo';
+import { NetworkSwitcher } from './NetworkSwitcher';
 
 export function Header() {
   return (
@@ -20,8 +21,11 @@ export function Header() {
             </div>
           </div>
 
-          {/* Wallet Info */}
-          <WalletInfo />
+          {/* Network Switcher & Wallet Info */}
+          <div className="flex items-center gap-4">
+            <NetworkSwitcher />
+            <WalletInfo />
+          </div>
         </div>
       </div>
     </header>

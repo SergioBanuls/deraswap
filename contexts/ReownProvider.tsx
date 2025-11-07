@@ -31,7 +31,9 @@ interface ReownContextType {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   callNativeMethod: (method: string, params: any) => Promise<any>;
+  executeTransactionWithSigner: (transaction: any) => Promise<any>;
   dAppConnector: DAppConnector | null;
+  signer: any | null; // DAppSigner from hedera-wallet-connect
 }
 
 const ReownContext = createContext<ReownContextType | undefined>(undefined);
@@ -43,6 +45,7 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [signer, setSigner] = useState<any | null>(null);
 
   // Inicializa DAppConnector de Hedera con Reown
   const initializeDAppConnector = useCallback(() => {
@@ -99,6 +102,7 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
         const accountId = session.getAccountId();
         console.log('✅ Cuenta conectada:', accountId.toString());
         setAccount(accountId.toString());
+        setSigner(session); // Store signer for use in transactions
         setIsConnected(true);
 
         // Guardar sesión en localStorage para persistencia
@@ -122,6 +126,7 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
       await dAppConnector.disconnectAll();
       setIsConnected(false);
       setAccount(null);
+      setSigner(null);
 
       // Limpiar localStorage
       localStorage.removeItem('hedera_wallet_connected');
@@ -178,6 +183,39 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
     throw new Error(`Método ${method} no soportado`);
   }, [isConnected, account]);
 
+  /**
+   * Execute a transaction using DAppSigner's executeWithSigner
+   *
+   * This is the CORRECT way to execute HBAR swaps, as it properly
+   * serializes the payableAmount field.
+   *
+   * @param transaction - Frozen transaction (from freezeWithSigner)
+   * @returns Transaction result with transactionId
+   */
+  const executeTransactionWithSigner = useCallback(async (transaction: any) => {
+    if (!signer) {
+      throw new Error("No signer available. Please connect your wallet first.");
+    }
+
+    console.log('🚀 Executing transaction with signer...');
+
+    try {
+      // Execute transaction using DAppSigner
+      const result = await transaction.executeWithSigner(signer);
+
+      console.log('✅ Transaction executed:', result);
+
+      // Return result with transactionId
+      return {
+        transactionId: result.transactionId.toString(),
+        success: true
+      };
+    } catch (error) {
+      console.error('❌ Error executing transaction with signer:', error);
+      throw error;
+    }
+  }, [signer]);
+
   // Restaurar sesión al cargar la página
   useEffect(() => {
     const restoreSession = async () => {
@@ -206,6 +244,7 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
             const accountId = session.getAccountId();
             console.log('✅ Sesión restaurada:', accountId.toString());
             setAccount(accountId.toString());
+            setSigner(session); // Restore signer
             setIsConnected(true);
           } else {
             console.log('⚠️ No hay sesión activa, limpiando localStorage');
@@ -235,7 +274,9 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
     connect,
     disconnect,
     callNativeMethod,
+    executeTransactionWithSigner,
     dAppConnector,
+    signer,
   };
 
   return (

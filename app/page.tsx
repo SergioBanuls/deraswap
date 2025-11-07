@@ -9,6 +9,8 @@ import { SwapRoute } from '@/types/route';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useSwapSettings } from '@/hooks/useSwapSettings';
 import { useTokens } from '@/hooks/useTokens';
+import { useTokenBalances } from '@/hooks/useTokenBalances';
+import { useReownConnect } from '@/hooks/useReownConnect';
 
 export default function Home() {
   const [fromToken, setFromToken] = useState<Token | null>(null);
@@ -17,9 +19,39 @@ export default function Home() {
   const [dialogType, setDialogType] = useState<'from' | 'to' | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<SwapRoute | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [hasBalanceError, setHasBalanceError] = useState(false);
 
+  // Get connected account
+  const { account } = useReownConnect();
+  
   // Fetch tokens list
   const { data: tokens } = useTokens();
+  
+  // Fetch token balances for connected account
+  const { balances } = useTokenBalances(account || null);
+  
+  // Debug: log balances
+  useEffect(() => {
+    if (Object.keys(balances).length > 0) {
+      console.log('💰 Balances obtenidos:', balances);
+      console.log('💰 From token:', fromToken?.id, fromToken?.symbol);
+    }
+  }, [balances, fromToken]);
+  
+  // Get balance for the from token
+  // Check multiple possible keys: token.id, HBAR, or token.symbol
+  const fromTokenBalance = fromToken 
+    ? (balances[fromToken.id] || 
+       (fromToken.symbol === 'HBAR' ? balances['HBAR'] : undefined) ||
+       (fromToken.symbol === 'WHBAR' ? balances['HBAR'] : undefined))
+    : undefined;
+    
+  // Debug: log the balance we're using
+  useEffect(() => {
+    if (fromToken) {
+      console.log('💵 Balance para', fromToken.symbol, ':', fromTokenBalance);
+    }
+  }, [fromToken, fromTokenBalance]);
 
   // Swap settings (slippage, deadline)
   const { settings, setSlippageTolerance, enableAutoSlippage, getEffectiveSlippage } = useSwapSettings();
@@ -106,6 +138,9 @@ export default function Home() {
               onSwapTokens={handleSwapTokens}
               dialogType={dialogType}
               onDialogChange={setDialogType}
+              fromTokenBalance={fromTokenBalance}
+              hasBalanceError={hasBalanceError}
+              onBalanceError={setHasBalanceError}
             />
           </div>
 

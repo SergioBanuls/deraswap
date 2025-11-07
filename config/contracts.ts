@@ -29,23 +29,51 @@ export const ETASWAP_CONTRACT: ContractConfig = {
 };
 
 /**
- * Custom Router Contract (Future)
+ * Custom Router Contract (Your deployed Exchange)
  *
- * This will be your custom contract with modified fee destination.
- * Simply update these values when deploying your contract.
+ * Uses the same interface as ETASwap, so we can reuse the ABI.
+ * The only difference is the fee destination wallet.
  */
 export const CUSTOM_CONTRACT: ContractConfig = {
   address: process.env.NEXT_PUBLIC_CUSTOM_ROUTER_ADDRESS || '',
   hederaId: process.env.NEXT_PUBLIC_CUSTOM_ROUTER_HEDERA_ID || '',
-  abi: [], // Will use custom ABI when available
-  fee: 0.3, // Same fee structure
+  abi: ETASwapExchangeABI, // Same interface as ETASwap
+  fee: 0.25, // Your custom fee: 0.25%
 };
 
 /**
- * Get active router configuration based on environment
+ * Get active router configuration based on network
  */
 export function getActiveRouter(): ContractConfig {
-  const routerType = (process.env.NEXT_PUBLIC_SWAP_ROUTER_TYPE || 'etaswap') as SwapRouterType;
+  // Always use custom contract if configured
+  if (CUSTOM_CONTRACT.address) {
+    console.log('🔧 Using Custom Router:', CUSTOM_CONTRACT.hederaId, CUSTOM_CONTRACT.address);
+    return CUSTOM_CONTRACT;
+  }
+
+  // Check localStorage for network preference (browser only)
+  if (typeof window !== 'undefined') {
+    const network = localStorage.getItem('hedera_network');
+    
+    if (network === 'testnet') {
+      // Use custom contract for testnet
+      if (CUSTOM_CONTRACT.address) {
+        console.log('🔧 Using Custom Router (testnet):', CUSTOM_CONTRACT.hederaId);
+        return CUSTOM_CONTRACT;
+      }
+    } else if (network === 'mainnet') {
+      // Use custom contract for mainnet too
+      if (CUSTOM_CONTRACT.address) {
+        console.log('🔧 Using Custom Router (mainnet):', CUSTOM_CONTRACT.hederaId);
+        return CUSTOM_CONTRACT;
+      }
+      console.log('🔧 Using ETASwap Router:', ETASWAP_CONTRACT.hederaId);
+      return ETASWAP_CONTRACT;
+    }
+  }
+
+  // Fallback to env variable
+  const routerType = (process.env.NEXT_PUBLIC_SWAP_ROUTER_TYPE || 'custom') as SwapRouterType;
 
   switch (routerType) {
     case 'custom':
@@ -53,9 +81,11 @@ export function getActiveRouter(): ContractConfig {
         console.warn('Custom router not configured, falling back to ETASwap');
         return ETASWAP_CONTRACT;
       }
+      console.log('🔧 Using Custom Router (env):', CUSTOM_CONTRACT.hederaId);
       return CUSTOM_CONTRACT;
     case 'etaswap':
     default:
+      console.log('🔧 Using ETASwap Router:', ETASWAP_CONTRACT.hederaId);
       return ETASWAP_CONTRACT;
   }
 }

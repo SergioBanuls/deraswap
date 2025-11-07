@@ -16,12 +16,26 @@
  * ) payable
  */
 
-import { ContractExecuteTransaction, ContractFunctionParameters, Hbar, AccountId, TransactionId } from '@hashgraph/sdk';
+import { ContractExecuteTransaction, ContractFunctionParameters, Hbar, AccountId, TransactionId, Transaction } from '@hashgraph/sdk';
+import { DAppSigner } from '@hashgraph/hedera-wallet-connect';
 import Long from 'long';
 import { getActiveRouter } from '@/config/contracts';
 import { SwapRoute } from '@/types/route';
 import { Token } from '@/types/token';
 import { SwapSettings } from '@/types/swap';
+
+/**
+ * Convert hex string to bytes array
+ */
+function hexToBytes(hex: string): Uint8Array {
+  // Remove 0x prefix if present
+  const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
+  const bytes = new Uint8Array(cleanHex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(cleanHex.substr(i * 2, 2), 16);
+  }
+  return bytes;
+}
 
 export interface SwapTransactionParams {
   route: SwapRoute;
@@ -30,6 +44,7 @@ export interface SwapTransactionParams {
   inputAmount: string; // Raw amount in smallest units
   settings: SwapSettings;
   userAccountId: string;
+  signer?: DAppSigner; // Optional signer for freezeWithSigner (required for HBAR swaps)
 }
 
 /**
@@ -74,7 +89,7 @@ function getAggregatorId(route: SwapRoute): string {
  * @returns EVM address (0x...)
  */
 function tokenIdToEvmAddress(tokenId: string): string {
-  const WHBAR_ADDRESS = '0x0000000000000000000000000000000000163a3a'; // 0.0.1456986
+  const WHBAR_ADDRESS = '0x0000000000000000000000000000000000163B5A'; // 0.0.1456986 (WHBAR [new]) - FIXED!
 
   if (tokenId === 'HBAR') {
     return WHBAR_ADDRESS;
@@ -110,13 +125,20 @@ function getTotalOutputAmount(route: SwapRoute): string {
  * Creates a ContractExecuteTransaction that calls the swap function
  * on the router contract.
  *
- * @param params - Swap transaction parameters
- * @returns Serialized transaction bytes ready for wallet signing
+ * When swapping FROM HBAR:
+ * - If signer is provided: Returns Promise of frozen Transaction (ready for executeWithSigner)
+ * - If signer is NOT provided: Returns Uint8Array (legacy flow - WILL FAIL)
+ *
+ * When NOT swapping from HBAR:
+ * - Always returns Uint8Array
+ *
+ * @param params - Swap transaction parameters (must include signer for HBAR swaps)
+ * @returns Serialized transaction bytes OR Promise of frozen Transaction
  */
-export function buildSwapTransaction(
+export async function buildSwapTransaction(
   params: SwapTransactionParams
-): Uint8Array {
-  const { route, fromToken, toToken, inputAmount, settings, userAccountId } = params;
+): Promise<Uint8Array | Transaction> {
+  const { route, fromToken, toToken, inputAmount, settings, userAccountId, signer } = params;
   const router = getActiveRouter();
 
   // Get network to determine node account
@@ -143,31 +165,94 @@ export function buildSwapTransaction(
     settings.slippageTolerance
   );
 
-  // Build function parameters
+  console.log('🔧 Building swap transaction:', {
+    aggregatorId,
+    tokenFromAddress,
+    tokenToAddress,
+    inputAmount,
+    expectedOutput,
+    minimumReceived,
+    deadline: settings.deadline,
+    slippage: settings.slippageTolerance,
+  });
+
+  // Convert values - try using number for values that fit in JS number range
+  const inputAmountNum = Number(inputAmount);
+  const minimumReceivedNum = Number(minimumReceived);
+  const deadlineNum = settings.deadline;
+
+  console.log('🔢 Numeric values:', {
+    inputAmountNum,
+    minimumReceivedNum,
+    deadlineNum,
+  });
+
+  // Use path from route if available (ETASwap provides the correct path with fees)
+  // Path format for V2: [token0 (20 bytes), fee (3 bytes), token1 (20 bytes), ...]
+  let pathBytes: Uint8Array;
+  
+  if (route.path && typeof route.path === 'string') {
+    // Use path directly from ETASwap API (already encoded)
+    console.log('📍 Using path from route:', route.path);
+    pathBytes = hexToBytes(route.path);
+  } else {
+    // Fallback: Build path manually (single hop with default 0.3% fee)
+    console.warn('⚠️ No path in route, building manually with 0.3% fee');
+    const fee = new Uint8Array([0x00, 0x0b, 0xb8]); // 3000 = 0.3% fee
+    pathBytes = new Uint8Array([
+      ...hexToBytes(tokenFromAddress),
+      ...fee,
+      ...hexToBytes(tokenToAddress),
+    ]);
+  }
+  
+  console.log('📍 Path bytes length:', pathBytes.length);
+
+  // Check if from token is HBAR
+  const isTokenFromHBAR = fromToken.id === 'HBAR';
+  // Build function parameters for custom contract
   const functionParams = new ContractFunctionParameters()
     .addString(aggregatorId)
-    .addAddress(tokenFromAddress)
-    .addAddress(tokenToAddress)
-    .addUint256(Long.fromString(inputAmount))
-    .addUint256(Long.fromString(minimumReceived))
-    .addUint256(settings.deadline)
+    .addBytes(pathBytes)
+    .addUint256(inputAmountNum)
+    .addUint256(minimumReceivedNum)
+    .addUint256(deadlineNum)
+    .addBool(isTokenFromHBAR)
     .addBool(false); // feeOnTransfer - set to false by default
+  
+  console.log('✅ All parameters added successfully');
 
-  // Create contract execute transaction
+  // Create contract execute transaction with explicit gas
+  const gasLimit = route.gasEstimate || 2000000; // Very high gas limit
+  console.log('⛽ Setting gas limit:', gasLimit);
+  
   const transaction = new ContractExecuteTransaction()
     .setTransactionId(transactionId)
     .setContractId(router.hederaId)
-    .setGas(route.gasEstimate || 300000) // Use route gas estimate or default
-    .setFunction('swap', functionParams)
-    .setNodeAccountIds([nodeAccountId]);
+    .setNodeAccountIds([nodeAccountId])
+    .setGas(gasLimit)
+    .setMaxTransactionFee(new Hbar(20)) // Very high max fee
+    .setFunction('swap', functionParams);
 
   // If swapping from HBAR, attach HBAR value
   if (fromToken.id === 'HBAR') {
     const hbarAmount = Number(inputAmount) / 100000000; // Convert tinybars to HBAR
     transaction.setPayableAmount(new Hbar(hbarAmount));
+
+    // CRITICAL: When swapping HBAR, we MUST use freezeWithSigner
+    // to properly serialize the payableAmount field
+    if (signer) {
+      console.log('🔐 Freezing HBAR swap transaction with signer...');
+      const frozenTx = await transaction.freezeWithSigner(signer);
+      console.log('✅ Transaction frozen with signer (payableAmount will be included)');
+      return frozenTx;
+    } else {
+      console.warn('⚠️ WARNING: Swapping HBAR without signer - payableAmount will NOT be serialized correctly!');
+      console.warn('⚠️ This transaction will likely FAIL with "amount: 0" error');
+    }
   }
 
-  // Freeze and convert to bytes
+  // For non-HBAR swaps, use regular freeze()
   const frozenTx = transaction.freeze();
   return frozenTx.toBytes();
 }

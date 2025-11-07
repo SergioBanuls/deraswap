@@ -140,9 +140,35 @@ pnpm start    # Iniciar servidor de producción
 pnpm lint     # Ejecutar linter
 ```
 
-## 📚 Recursos
+## � Deployment a Mainnet
+
+Para desplegar tus propios contratos personalizados en Hedera Mainnet:
+
+1. **[📖 Guía de Deployment Mainnet](./MAINNET_DEPLOYMENT.md)** - Instrucciones paso a paso
+2. **[💰 Configuración de Wallet de Fees](./FEE_WALLET_CONFIG.md)** - Cómo configurar tu wallet para recibir fees
+3. **[✅ Pre-deployment Checklist](./scripts/pre-deployment-check.ts)** - Script para verificar antes del deployment
+
+### Quick Start Deployment
+
+```bash
+# 1. Verificar que todo está listo
+npx tsx scripts/pre-deployment-check.ts
+
+# 2. Deploy Exchange contract
+npx tsx scripts/deploy-mainnet-exchange.ts
+
+# 3. Deploy Adapter contract
+npx tsx scripts/deploy-mainnet-adapter.ts
+
+# 4. Configurar adapter (actualiza los IDs primero)
+npx tsx scripts/configure-adapter-mainnet.ts
+```
+
+## �📚 Recursos
 
 - [Documentación de Hedera](https://docs.hedera.com/)
 - [Hedera Wallet Connect](https://github.com/hashgraph/hedera-wallet-connect)
 - [Reown AppKit](https://docs.reown.com/appkit/overview)
 - [Next.js](https://nextjs.org/docs)
+- [SaucerSwap V2](https://www.saucerswap.finance)
+- [HashScan Explorer](https://hashscan.io)

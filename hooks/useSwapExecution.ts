@@ -39,6 +39,8 @@ import {
 import { getActiveRouter } from '@/config/contracts';
 import { monitorTransaction, getTransactionExplorerUrl } from '@/utils/transactionMonitor';
 import { parseHederaError, formatErrorMessage } from '@/utils/errorMessages';
+import { useEnsureTokensAssociated } from '@/hooks/useEnsureTokensAssociated';
+import { extractTokensFromPath, evmAddressToTokenId } from '@/utils/pathUtils';
 
 export interface SwapExecutionParams {
   route: SwapRoute;
@@ -60,6 +62,7 @@ export interface SwapExecutionState {
 export type SwapStep =
   | 'idle'
   | 'validating'
+  | 'ensuring_adapter_tokens'
   | 'checking_association'
   | 'requesting_association'
   | 'checking_allowance'
@@ -74,6 +77,7 @@ export type SwapStep =
 const STEP_MESSAGES: Record<SwapStep, string> = {
   idle: 'Ready to swap',
   validating: 'Validating swap parameters...',
+  ensuring_adapter_tokens: 'Ensuring adapter supports tokens...',
   checking_association: 'Checking token association...',
   requesting_association: 'Requesting token association...',
   checking_allowance: 'Checking token allowance...',
@@ -87,7 +91,8 @@ const STEP_MESSAGES: Record<SwapStep, string> = {
 };
 
 export function useSwapExecution() {
-  const { callNativeMethod, account, isConnected } = useReownContext();
+  const { callNativeMethod, executeTransactionWithSigner, signer, account, isConnected } = useReownContext();
+  const { ensureTokensAssociated, isEnsuring } = useEnsureTokensAssociated();
   const [state, setState] = useState<SwapExecutionState>({
     isExecuting: false,
     currentStep: 'idle',
@@ -155,7 +160,52 @@ export function useSwapExecution() {
           throw new Error(validation.error || 'Invalid swap parameters');
         }
 
-        // Step 2: Check token association for destination token (skip for HBAR)
+        // Step 2: Ensure adapter has ALL path tokens associated (backend check)
+        updateState('ensuring_adapter_tokens');
+        
+        const tokensToCheck: string[] = [];
+        if (params.fromToken.id !== 'HBAR') tokensToCheck.push(params.fromToken.id);
+        if (params.toToken.id !== 'HBAR') tokensToCheck.push(params.toToken.id);
+        
+        // Extract intermediate tokens from path (for SaucerSwapV2)
+        const aggregatorId = Array.isArray(params.route.aggregatorId) 
+          ? params.route.aggregatorId[0] 
+          : params.route.aggregatorId;
+          
+        if (aggregatorId.startsWith('SaucerSwapV2') && params.route.path) {
+          console.log('🔍 Extracting tokens from path:', params.route.path);
+          
+          // Handle path (can be string or array)
+          const pathStr = Array.isArray(params.route.path) 
+            ? params.route.path[0] 
+            : params.route.path;
+            
+          const pathTokens = extractTokensFromPath(pathStr);
+          console.log('📍 Path tokens found:', pathTokens);
+          
+          // Convert EVM addresses to Hedera token IDs
+          for (const evmAddress of pathTokens) {
+            const tokenId = evmAddressToTokenId(evmAddress);
+            // Skip HBAR/WHBAR and already included tokens
+            if (tokenId !== '0.0.1456986' && !tokensToCheck.includes(tokenId)) {
+              tokensToCheck.push(tokenId);
+            }
+          }
+          
+          console.log('🔍 All tokens to check (including path):', tokensToCheck);
+        }
+        
+        if (tokensToCheck.length > 0) {
+          console.log('🔍 Checking adapter token associations:', tokensToCheck);
+          const adapterReady = await ensureTokensAssociated(tokensToCheck);
+          
+          if (!adapterReady) {
+            throw new Error('Failed to ensure adapter supports these tokens. Please try again.');
+          }
+          console.log('✅ Adapter tokens verified');
+        }
+
+        // Step 3: Check token association for destination token (skip for HBAR)
         if (params.toToken.id !== 'HBAR') {
           updateState('checking_association');
 
@@ -166,7 +216,7 @@ export function useSwapExecution() {
 
           const associationResult = await requestTokenAssociation(associationParams);
 
-          // Step 2b: Request association if needed
+          // Step 3b: Request association if needed
           if (associationResult.needed && associationResult.transaction) {
             updateState('requesting_association');
             toast.info('Please associate the token in your wallet to receive it');
@@ -255,14 +305,31 @@ export function useSwapExecution() {
 
         // Step 5: Build swap transaction
         updateState('building_transaction');
-        const swapTxBytes = buildSwapTransaction(txParams);
 
-        // Step 6: Request signature
+        // CRITICAL: When swapping FROM HBAR, we MUST use signer
+        // to properly serialize the payableAmount field
+        const isHbarSwap = params.fromToken.id === 'HBAR';
+        const txParamsWithSigner = isHbarSwap
+          ? { ...txParams, signer }
+          : txParams;
+
+        const swapTx = await buildSwapTransaction(txParamsWithSigner);
+
+        // Step 6: Request signature and execute
         updateState('awaiting_signature');
 
-        const result = await callNativeMethod('hedera_signAndExecuteTransaction', {
-          transaction: swapTxBytes,
-        });
+        let result: any;
+
+        // Use different execution method based on whether we're swapping HBAR
+        if (isHbarSwap && swapTx instanceof Object && 'executeWithSigner' in swapTx) {
+          console.log('🪙 HBAR swap detected - using executeTransactionWithSigner');
+          result = await executeTransactionWithSigner(swapTx);
+        } else {
+          console.log('🪙 Token swap - using callNativeMethod');
+          result = await callNativeMethod('hedera_signAndExecuteTransaction', {
+            transaction: swapTx as Uint8Array,
+          });
+        }
 
         console.log('Swap transaction result:', result);
 

@@ -84,8 +84,42 @@ async function fetchSwapRoutes({
     return [];
   }
 
+  // IMPORTANTE: Solo usamos rutas de SaucerSwapV2 porque es el único adapter configurado
+  // El adapter está registrado como "SaucerSwapV2" en el Exchange
+  // All fixes applied: WHBAR address, fee handling via wrap
+  // Debug: Ver qué aggregators devuelve ETASwap
+  const aggregators = etaRoutes.map((r: any) => r.aggregatorId);
+  console.log('Available aggregators from ETASwap:', [...new Set(aggregators)]);
+  
+  // Try SaucerSwapV2 first, fallback to SaucerSwap (V1) if needed
+  let saucerRoutes = etaRoutes.filter((route: any) => 
+    route.aggregatorId === 'SaucerSwapV2'
+  );
+  
+  // If no V2 routes, try V1 (they use the same router)
+  if (saucerRoutes.length === 0) {
+    console.warn('No SaucerSwapV2 routes, trying SaucerSwap V1...');
+    saucerRoutes = etaRoutes.filter((route: any) => 
+      route.aggregatorId === 'SaucerSwap' || route.aggregatorId === 'SaucerSwapV1'
+    );
+  }
+
+  // Cambiar el aggregatorId a nuestro nombre registrado
+  // EXACT2 = 100% EXACTO como ETASwap (código + configuración)
+  saucerRoutes.forEach((route: any) => {
+    route.aggregatorId = 'SaucerSwapV2_EXACT2';
+  });
+
+  console.log(`Filtered to SaucerSwap routes: ${saucerRoutes.length}/${etaRoutes.length} routes`);
+
+  if (saucerRoutes.length === 0) {
+    console.warn('No SaucerSwap routes available. ETASwap returned other DEXs that are not supported.');
+    console.warn('Available routes:', etaRoutes.map((r: any) => ({ aggregator: r.aggregatorId, pools: r.pools?.length })));
+    throw new Error('No compatible routes found. Only SaucerSwap is supported.');
+  }
+
   // Process routes and add computed fields
-  const processedRoutes: SwapRoute[] = etaRoutes.map((route: any) => {
+  const processedRoutes: SwapRoute[] = saucerRoutes.map((route: any) => {
     // Calculate total output amount
     let totalAmountTo: string;
     if (Array.isArray(route.amountTo)) {
