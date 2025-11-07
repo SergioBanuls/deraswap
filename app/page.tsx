@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { Header } from '@/components/Header';
 import { SwapCard } from '@/components/SwapCard';
 import { SwapRoutes } from '@/components/SwapRoutes';
 import { SettingsDialog } from '@/components/SettingsDialog';
@@ -131,8 +132,10 @@ export default function Home() {
   }, [fromToken, toToken]);
 
   return (
-    <div className="flex items-center justify-center mt-36 w-full">
-      <div className="max-w-5xl w-full px-4">
+    <>
+      <Header />
+      <div className="flex items-center justify-center mt-36 w-full">
+        <div className="max-w-5xl w-full px-4">
         {/* Grid layout - always present, mobile stack, desktop side-by-side */}
         <div className={`grid grid-cols-1 gap-6 items-center lg:items-start transition-all duration-700 ${
           showRoutes ? 'lg:grid-cols-2 lg:justify-center' : 'lg:grid-cols-1 lg:justify-items-center'
@@ -188,7 +191,8 @@ export default function Home() {
           onSlippageChange={setSlippageTolerance}
           onAutoModeChange={enableAutoSlippage}
         />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

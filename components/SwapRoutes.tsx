@@ -12,6 +12,7 @@ import { Token } from '@/types/token';
 import { SwapRoute } from '@/types/route';
 import { useSwapRoutes } from '@/hooks/useSwapRoutes';
 import { ChevronDown, Fuel, Clock } from 'lucide-react';
+import { RouteCardSkeleton } from './RouteCardSkeleton';
 
 interface SwapRoutesProps {
   fromToken: Token | null;
@@ -79,9 +80,11 @@ export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount,
       {/* Routes Container */}
       <div className="bg-neutral-900 rounded-b-3xl p-6 pt-2 space-y-3 max-h-[600px] overflow-y-auto">
         {isLoading && (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-white/60">Loading routes...</div>
-          </div>
+          <>
+            {[1, 2, 3].map((i) => (
+              <RouteCardSkeleton key={i} showBadge={i === 1} />
+            ))}
+          </>
         )}
 
         {error && !isLoading && (
@@ -94,7 +97,7 @@ export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount,
           <div className="text-white/60 text-sm text-center py-4">No routes available</div>
         )}
 
-        {!isLoading && fromToken && toToken && displayRoutes && displayRoutes.map((route, index) => {
+        {!isLoading && fromToken && toToken && displayRoutes && displayRoutes.map((route: SwapRoute, index: number) => {
         const isBestRoute = index === 0;
         const isSelected = index === selectedRoute;
 
@@ -114,10 +117,10 @@ export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount,
             <div
               key={`${route.transactionType}-${index}`}
               onClick={() => handleSelectRoute(index)}
-              className={`bg-neutral-800/50 rounded-2xl p-4 cursor-pointer transition-all duration-200 border ${
+              className={`rounded-2xl p-4 cursor-pointer transition-all duration-200 border ${
                 isSelected 
-                  ? 'ring-2 ring-blue-500 bg-neutral-800/80 border-blue-500/50' 
-                  : 'border-transparent hover:bg-neutral-800/70 hover:border-neutral-700'
+                  ? 'ring-1 ring-blue-500 bg-blue-950/70 border-blue-500/50' 
+                  : 'bg-neutral-800/50 border-transparent hover:bg-neutral-800/70 hover:border-neutral-700'
               }`}
             >
               {/* Badge */}
@@ -138,40 +141,37 @@ export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount,
                     />
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-white">
+                    <div className="text-2xl font-bold text-white">
                       {route.outputAmountFormatted}
                     </div>
-                    <div className="text-sm text-white/60 mt-1">
-                      ${(parseFloat(route.outputAmountFormatted) * toToken.priceUsd).toFixed(2)}
+                    <div className="flex items-center gap-1 text-sm text-white/60">
+                      <span>${(parseFloat(route.outputAmountFormatted) * toToken.priceUsd).toFixed(2)}</span>
+                      <span>•</span>
+                      <span className={route.priceImpact < 0 ? 'text-red-400' : 'text-green-400'}>
+                        {route.priceImpact > 0 ? '+' : ''}{route.priceImpact.toFixed(2)}%
+                      </span>
+                      <span>•</span>
+                      <span>{aggregatorDisplay}</span>
                     </div>
                   </div>
                 </div>
                 <ChevronDown className={`w-5 h-5 text-white/40 transition-transform ${isSelected ? 'rotate-180' : ''}`} />
               </div>
 
-              {/* Stats Row */}
-              <div className="flex items-center gap-3 text-sm text-white/60 mb-3">
-                <span className={route.priceImpact < 0 ? 'text-red-400' : 'text-green-400'}>
-                  {route.priceImpact > 0 ? '+' : ''}{route.priceImpact.toFixed(2)}%
-                </span>
-                <span>•</span>
-                <span>{aggregatorDisplay}</span>
-              </div>
-
-              {/* Exchange Summary */}
-              <div className="text-sm text-white/50 mb-3">
-                1 {fromToken.symbol} ≈ {(parseFloat(route.outputAmountFormatted) / parseFloat(amount)).toFixed(6)} {toToken.symbol}
-              </div>
-
-              {/* Gas and Time Row */}
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5 text-white/60">
-                  <Fuel className="w-4 h-4" />
-                  <span>{formatGasCost(route.gasEstimate)}</span>
+              {/* Exchange Summary and Gas/Time */}
+              <div className="flex items-center justify-between text-sm">
+                <div className="text-white/50">
+                  1 {fromToken.symbol} ≈ {(parseFloat(route.outputAmountFormatted) / parseFloat(amount)).toFixed(6)} {toToken.symbol}
                 </div>
-                <div className="flex items-center gap-1.5 text-white/60">
-                  <Clock className="w-4 h-4" />
-                  <span>{estimateTime(route.gasEstimate)}</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5 text-white/60">
+                    <Fuel className="w-4 h-4" />
+                    <span>{formatGasCost(route.gasEstimate)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-white/60">
+                    <Clock className="w-4 h-4" />
+                    <span>{estimateTime(route.gasEstimate)}</span>
+                  </div>
                 </div>
               </div>
             </div>
