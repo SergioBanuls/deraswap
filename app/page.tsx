@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { Header } from '@/components/Header';
 import { SwapCard } from '@/components/SwapCard';
 import { SwapRoutes } from '@/components/SwapRoutes';
-import { SettingsDialog } from '@/components/SettingsDialog';
+import { SettingsCard } from '@/components/SettingsCard';
 import { Token } from '@/types/token';
 import { SwapRoute } from '@/types/route';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -18,8 +19,7 @@ export default function Home() {
   const [amount, setAmount] = useState('');
   const [dialogType, setDialogType] = useState<'from' | 'to' | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<SwapRoute | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [hasBalanceError, setHasBalanceError] = useState(false);
+  const [view, setView] = useState<'swap' | 'settings'>('swap');
 
   // Get connected account
   const { account } = useReownConnect();
@@ -131,41 +131,51 @@ export default function Home() {
   }, [fromToken, toToken]);
 
   return (
-    <div className="flex items-center justify-center mt-36 w-full">
-      <div className="max-w-5xl w-full px-4">
+    <>
+      <Header />
+      <div className="flex items-center justify-center mt-36 w-full">
+        <div className="max-w-5xl w-full px-4">
         {/* Grid layout - always present, mobile stack, desktop side-by-side */}
-        <div className={`grid grid-cols-1 gap-6 items-center lg:items-start transition-all duration-700 ${
-          showRoutes ? 'lg:grid-cols-2 lg:justify-center' : 'lg:grid-cols-1 lg:justify-items-center'
+        <div className={`grid grid-cols-1 gap-6 items-center lg:items-start transition-all duration-900 ease-in-out ${
+          showRoutes && view === 'swap' ? 'lg:grid-cols-2 lg:justify-center' : 'lg:grid-cols-1 lg:justify-items-center'
         }`}>
-          {/* Left Column - Swap Card */}
-          <div className="w-full max-w-md mx-auto transition-all duration-700 ease-in-out relative z-10">
-            <SwapCard
-              fromToken={fromToken}
-              toToken={toToken}
-              amount={amount}
-              selectedRoute={selectedRoute}
-              settings={settings}
-              effectiveSlippage={effectiveSlippage}
-              onSettingsClick={() => setSettingsOpen(true)}
-              onFromTokenSelect={handleFromTokenSelect}
-              onToTokenSelect={handleToTokenSelect}
-              onAmountChange={setAmount}
-              onSwapTokens={handleSwapTokens}
-              dialogType={dialogType}
-              onDialogChange={setDialogType}
-              fromTokenBalance={fromTokenBalance}
-              hasBalanceError={hasBalanceError}
-              onBalanceError={setHasBalanceError}
-            />
+          {/* Left Column - Swap Card or Settings Card */}
+          <div className="w-full max-w-md mx-auto transition-all duration-900 ease-in-out relative z-10">
+            {view === 'swap' ? (
+              <SwapCard
+                fromToken={fromToken}
+                toToken={toToken}
+                amount={amount}
+                selectedRoute={selectedRoute}
+                settings={settings}
+                effectiveSlippage={effectiveSlippage}
+                onSettingsClick={() => setView('settings')}
+                onFromTokenSelect={handleFromTokenSelect}
+                onToTokenSelect={handleToTokenSelect}
+                onAmountChange={setAmount}
+                onSwapTokens={handleSwapTokens}
+                dialogType={dialogType}
+                onDialogChange={setDialogType}
+              />
+            ) : (
+              <SettingsCard
+                settings={settings}
+                selectedRoute={selectedRoute}
+                effectiveSlippage={effectiveSlippage}
+                onSlippageChange={setSlippageTolerance}
+                onAutoModeChange={enableAutoSlippage}
+                onBack={() => setView('swap')}
+              />
+            )}
           </div>
 
           {/* Right Column - Swap Routes */}
           <div className={`w-full max-w-md mx-auto transition-all duration-700 ease-in-out relative z-0 ${
-            showRoutes
+            showRoutes && view === 'swap'
               ? 'opacity-100 scale-100'
               : 'opacity-0 lg:-translate-x-[50%] scale-95 pointer-events-none'
           }`}>
-            {showRoutes && (
+            {showRoutes && view === 'swap' && (
               <SwapRoutes
                 fromToken={fromToken}
                 toToken={toToken}
@@ -177,18 +187,8 @@ export default function Home() {
             )}
           </div>
         </div>
-
-        {/* Settings Dialog */}
-        <SettingsDialog
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-          settings={settings}
-          selectedRoute={selectedRoute}
-          effectiveSlippage={effectiveSlippage}
-          onSlippageChange={setSlippageTolerance}
-          onAutoModeChange={enableAutoSlippage}
-        />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

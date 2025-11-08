@@ -8,17 +8,37 @@
 
 import { WalletInfo } from './WalletInfo';
 import { NetworkSwitcher } from './NetworkSwitcher';
+import Image from 'next/image';
+import { useReownConnect } from '@/hooks/useReownConnect';
 
 export function Header() {
+  const { connect, disconnect, isConnected, account, loading } = useReownConnect();
+
+  const handleClick = () => {
+    if (isConnected) {
+      disconnect();
+    } else {
+      connect();
+    }
+  };
+
+  const formatAccount = (acc: string) => {
+    return `${acc.slice(0, 6)}...${acc.slice(-4)}`;
+  };
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-md border-b border-neutral-800">
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 ">
+      <div className="mx-auto py-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-              DeraSwap
-            </div>
+          <div>
+            <Image
+              src="/DERASWAP.png"
+              alt="DeraSwap"
+              width={200}
+              height={60}
+              priority
+            />
           </div>
 
           {/* Network Switcher & Wallet Info */}
@@ -26,8 +46,16 @@ export function Header() {
             <NetworkSwitcher />
             <WalletInfo />
           </div>
-        </div>
-      </div>
-    </header>
+          {/* Connect Wallet Button */}
+          <button
+            onClick={handleClick}
+            disabled={loading}
+            className="px-6 py-2 from-p bg-blue-500 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-all duration-200 text-white"
+          >
+            {loading ? 'Connecting...' : isConnected && account ? formatAccount(account) : 'Connect Wallet'}
+          </button>
+        </div >
+      </div >
+    </header >
   );
 }
