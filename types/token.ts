@@ -6,8 +6,9 @@ export interface Token {
   solidityAddress: string;
   icon: string;
   providers: string[];
-  // Optional fields for backwards compatibility
+  price?: number;
   priceUsd?: number;
+  balance?: string; // Token balance when fetched with account context
 }
 
 export interface TokenListResponse {

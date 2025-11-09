@@ -1,7 +1,7 @@
 /**
  * Hook for fetching token balances for a connected account
  *
- * Uses Hedera Mirror Node API to fetch all token balances for an account.
+ * Uses API route to fetch all token balances for an account.
  * Automatically refreshes balances periodically.
  *
  * @param accountId - The Hedera account ID (e.g., "0.0.123456")
@@ -12,26 +12,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const HEDERA_NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
-const MIRROR_NODE_URL = HEDERA_NETWORK === 'mainnet'
-  ? 'https://mainnet.mirrornode.hedera.com'
-  : 'https://testnet.mirrornode.hedera.com';
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
 export interface TokenBalance {
   tokenId: string;
   balance: string;
   decimals: number;
-}
-
-interface MirrorNodeBalance {
-  token_id: string;
-  balance: number;
-  decimals: number;
-}
-
-interface MirrorNodeResponse {
-  balances: MirrorNodeBalance[];
 }
 
 export function useTokenBalances(accountId: string | null) {
@@ -50,49 +36,24 @@ export function useTokenBalances(accountId: string | null) {
     setError(null);
 
     try {
-      // Fetch from Hedera Mirror Node
-      const response = await fetch(
-        `${MIRROR_NODE_URL}/api/v1/accounts/${accountId}/tokens?limit=100`
-      );
+      // Fetch from our API route
+      const response = await fetch(`/api/balances/${accountId}`);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch balances from mirror node');
+        throw new Error('Failed to fetch balances from API');
       }
 
       const data = await response.json();
-      console.log('📡 Respuesta del Mirror Node:', data);
+
+      console.log("Balances data:", data);
 
       const balanceMap: Record<string, string> = {};
 
-      // Process token balances - API puede devolver 'tokens' o 'balances'
-      const tokenList = data.tokens || data.balances || [];
-      console.log('📦 Token list:', tokenList);
-      
-      if (tokenList && tokenList.length > 0) {
-        tokenList.forEach((tokenBalance: any) => {
-          // Store with Hedera ID format (0.0.XXXXX)
-          const tokenId = tokenBalance.token_id;
-          const balance = tokenBalance.balance;
-          
-          if (tokenId && balance !== undefined) {
-            balanceMap[tokenId] = balance.toString();
-            console.log(`  ✓ Token ${tokenId}: ${balance}`);
-          }
+      // Process unified balances array from API
+      if (data.balances && Array.isArray(data.balances)) {
+        data.balances.forEach((item: { tokenId: string; balance: string }) => {
+          balanceMap[item.tokenId] = item.balance;
         });
-      }
-      
-      console.log('🔍 Tokens encontrados:', Object.keys(balanceMap));
-
-      // Also fetch HBAR balance
-      const accountResponse = await fetch(
-        `${MIRROR_NODE_URL}/api/v1/accounts/${accountId}`
-      );
-
-      if (accountResponse.ok) {
-        const accountData = await accountResponse.json();
-        if (accountData.balance) {
-          balanceMap['HBAR'] = accountData.balance.balance.toString();
-        }
       }
 
       setBalances(balanceMap);

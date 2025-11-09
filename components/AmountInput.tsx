@@ -8,7 +8,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import { Token } from '@/types/token';
 import Image from 'next/image';
 import { useTokenPrice } from '@/hooks/useTokenPrice';
@@ -101,7 +100,7 @@ export function AmountInput({
 
   const currentPrice = useTokenPrice(token?.address || null, token?.priceUsd || 0);
   const usdValue = token && amount && parseFloat(amount) > 0
-    ? (parseFloat(amount) * currentPrice).toFixed(2)
+    ? (parseFloat(amount) * currentPrice).toFixed(4)
     : '0.00';
 
   const formattedBalance = balance && token
@@ -158,7 +157,7 @@ export function AmountInput({
                 </span>
               ) : (
                 <span className="text-white/50">
-                  / <span className="inline-block h-3 w-16 bg-white/10 animate-pulse rounded"></span>
+                  <span className="inline-block h-3 w-16 bg-white/10 animate-pulse rounded"></span>
                 </span>
               )
             )}

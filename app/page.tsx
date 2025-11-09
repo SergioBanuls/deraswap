@@ -24,13 +24,12 @@ export default function Home() {
 
   // Get connected account
   const { account } = useReownConnect();
-  
+
   // Fetch tokens list
   const { data: tokens } = useTokens();
-  
+
   // Fetch token balances for connected account
   const { balances, loading: balancesLoading } = useTokenBalances(account || null);
-  
 
   // Get balance for the from token
   // Check multiple possible keys: token.address or HBAR special case
@@ -42,13 +41,13 @@ export default function Home() {
     // For HBAR (empty address), use 'HBAR' as key
     const balanceKey = fromToken.address === '' ? 'HBAR' : fromToken.address;
     const balance = balances[balanceKey];
-    
+
     if (balance !== undefined) return balance;
 
     // Token not found in balances = not associated or 0 balance
     return "0";
   })();
-    
+
   // Swap settings (slippage, deadline)
   const { settings, setSlippageTolerance, enableAutoSlippage, getEffectiveSlippage } = useSwapSettings();
 
@@ -124,14 +123,12 @@ export default function Home() {
   }, []);
 
   return (
-    <>
-      <Header />
-      <div className="flex items-center justify-center mt-36 w-full">
-        <div className="max-w-5xl w-full px-4">
+
+    <div className="flex items-center justify-center mt-36 w-full">
+      <div className="max-w-5xl w-full px-4">
         {/* Grid layout - always present, mobile stack, desktop side-by-side */}
-        <div className={`grid grid-cols-1 gap-6 items-center lg:items-start transition-all duration-900 ease-in-out ${
-          showRoutes && view === 'swap' ? 'lg:grid-cols-2 lg:justify-center' : 'lg:grid-cols-1 lg:justify-items-center'
-        }`}>
+        <div className={`grid grid-cols-1 gap-6 items-center lg:items-start transition-all duration-900 ease-in-out ${showRoutes && view === 'swap' ? 'lg:grid-cols-2 lg:justify-center' : 'lg:grid-cols-1 lg:justify-items-center'
+          }`}>
           {/* Left Column - Swap Card, Settings Card, or Token Select Card */}
           <div className="w-full max-w-md mx-auto transition-all duration-900 ease-in-out relative z-10">
             {view === 'swap' ? (
@@ -163,16 +160,16 @@ export default function Home() {
                 label={tokenSelectType === 'from' ? 'From' : 'To'}
                 onSelectToken={tokenSelectType === 'from' ? handleFromTokenSelect : handleToTokenSelect}
                 onBack={() => setView('swap')}
+                balances={balances}
               />
             )}
           </div>
 
           {/* Right Column - Swap Routes */}
-          <div className={`w-full max-w-md mx-auto transition-all duration-700 ease-in-out relative z-0 ${
-            showRoutes && view === 'swap'
+          <div className={`w-full max-w-md mx-auto transition-all duration-700 ease-in-out relative z-0 ${showRoutes && view === 'swap'
               ? 'opacity-100 scale-100'
               : 'opacity-0 lg:-translate-x-[50%] scale-95 pointer-events-none'
-          }`}>
+            }`}>
             {showRoutes && view === 'swap' && (
               <SwapRoutes
                 fromToken={fromToken}
@@ -185,8 +182,7 @@ export default function Home() {
             )}
           </div>
         </div>
-        </div>
       </div>
-    </>
+    </div>
   );
 }
