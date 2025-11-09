@@ -49,15 +49,6 @@ export default function Home() {
     return "0";
   })();
     
-  // Debug: log the balance we're using
-  useEffect(() => {
-    if (fromToken) {
-      console.log('💵 Balance para', fromToken.symbol, ':', fromTokenBalance);
-      console.log('   - balancesLoading:', balancesLoading);
-      console.log('   - balance type:', typeof fromTokenBalance);
-    }
-  }, [fromToken, fromTokenBalance, balancesLoading]);
-
   // Swap settings (slippage, deadline)
   const { settings, setSlippageTolerance, enableAutoSlippage, getEffectiveSlippage } = useSwapSettings();
 
