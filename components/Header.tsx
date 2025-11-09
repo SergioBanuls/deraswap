@@ -1,14 +1,12 @@
 /**
  * Header Component
  *
- * Top navigation bar with logo, network switcher, and wallet info.
+ * Top navigation bar with logo and wallet info.
  */
 
 'use client';
 
-import { NetworkSwitcher } from './NetworkSwitcher';
 import Image from 'next/image';
-import { useReownConnect } from '@/hooks/useReownConnect';
 import { SessionActionButtons } from './SessionActionButtons';
 
 export function Header() {
@@ -28,10 +26,6 @@ export function Header() {
             />
           </div>
 
-          {/* Network Switcher & Wallet Info */}
-          <div className="flex items-center gap-4">
-            <NetworkSwitcher />
-          </div>
           {/* Connect Wallet Button */}
           <SessionActionButtons />
 

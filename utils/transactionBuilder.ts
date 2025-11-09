@@ -142,7 +142,7 @@ export async function buildSwapTransaction(
   const router = getActiveRouter();
 
   // Check if we're doing an HBAR swap with signer
-  const isHbarSwapWithSigner = fromToken.id === 'HBAR' && signer;
+  const isHbarSwapWithSigner = fromToken.address === '' && signer;
 
   // Get network to determine node account (only if NOT using signer)
   const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
@@ -156,9 +156,9 @@ export async function buildSwapTransaction(
   // Get aggregator ID
   const aggregatorId = getAggregatorId(route);
 
-  // Convert tokens to EVM addresses
-  const tokenFromAddress = tokenIdToEvmAddress(fromToken.id);
-  const tokenToAddress = tokenIdToEvmAddress(toToken.id);
+  // Use solidity addresses from token objects
+  const tokenFromAddress = fromToken.solidityAddress;
+  const tokenToAddress = toToken.solidityAddress;
 
   // Calculate total expected output
   const expectedOutput = getTotalOutputAmount(route);
@@ -209,7 +209,7 @@ export async function buildSwapTransaction(
     const WHBAR_ADDRESS = '0x0000000000000000000000000000000000163B5A';
     const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
-    const correctedRoute = route.route.map((addr: string) => {
+    const correctedRoute = route.route.map((addr: any) => {
       if (addr.toLowerCase() === ADDRESS_ZERO.toLowerCase()) {
         console.log('🔄 Replacing address(0) with WHBAR address in V1 path');
         return WHBAR_ADDRESS;
@@ -251,7 +251,7 @@ export async function buildSwapTransaction(
   console.log('📍 Path bytes length:', pathBytes.length, '(isV1:', isV1Route, ')');
 
   // Check if from token is HBAR
-  const isTokenFromHBAR = fromToken.id === 'HBAR';
+  const isTokenFromHBAR = fromToken.address === '';
   // Build function parameters for custom contract
   const functionParams = new ContractFunctionParameters()
     .addString(aggregatorId)
@@ -290,7 +290,7 @@ export async function buildSwapTransaction(
   }
 
   // If swapping from HBAR, attach HBAR value
-  if (fromToken.id === 'HBAR') {
+  if (fromToken.address === '') {
     const hbarAmount = Number(inputAmount) / 100000000; // Convert tinybars to HBAR
     transaction.setPayableAmount(new Hbar(hbarAmount));
 

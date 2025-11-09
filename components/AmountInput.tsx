@@ -97,7 +97,7 @@ export function AmountInput({
     let maxAmount = balance;
 
     // If HBAR, reserve some for gas fees
-    if (token.id === 'HBAR') {
+    if (token.address === '' || token.symbol === 'HBAR') {
       const balanceBigInt = BigInt(balance);
       const reserve = BigInt(GAS_RESERVE_HBAR);
 
@@ -114,7 +114,7 @@ export function AmountInput({
     setLocalError(null);
   };
 
-  const currentPrice = useTokenPrice(token?.id || null, token?.priceUsd || 0);
+  const currentPrice = useTokenPrice(token?.address || null, token?.priceUsd || 0);
   const usdValue = token && amount && parseFloat(amount) > 0
     ? (parseFloat(amount) * currentPrice).toFixed(2)
     : '0.00';

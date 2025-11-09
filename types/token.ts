@@ -1,23 +1,15 @@
 export interface Token {
-  id: string;
-  icon: string;
-  symbol: string;
   name: string;
+  symbol: string;
   decimals: number;
-  price: string;
-  priceUsd: number;
-  dueDiligenceComplete: boolean;
-  isFeeOnTransferToken: boolean;
-  description?: string;
-  website?: string;
-  twitterHandle?: string;
-  sentinelReport?: string;
-  timestampSecondsLastListingChange?: number;
-  chain?: string;
-  chainIcon?: string;
+  address: string; // Empty string for HBAR, otherwise "0.0.XXXXX"
+  solidityAddress: string;
+  icon: string;
+  providers: string[];
+  // Optional fields for backwards compatibility
+  priceUsd?: number;
 }
 
 export interface TokenListResponse {
   tokens: Token[];
 }
-

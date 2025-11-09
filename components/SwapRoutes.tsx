@@ -145,7 +145,6 @@ export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount,
                       {route.outputAmountFormatted}
                     </div>
                     <div className="flex items-center gap-1 text-sm text-white/60">
-                      <span>${(parseFloat(route.outputAmountFormatted) * toToken.priceUsd).toFixed(2)}</span>
                       <span>•</span>
                       <span className={route.priceImpact < 0 ? 'text-red-400' : 'text-green-400'}>
                         {route.priceImpact > 0 ? '+' : ''}{route.priceImpact.toFixed(2)}%

@@ -12,7 +12,6 @@ import { Token } from '@/types/token';
 import { SwapRoute } from '@/types/route';
 import { SwapSettings } from '@/types/swap';
 import { TokenSelector } from './TokenSelector';
-import { TokenSelectDialog } from './TokenSelectDialog';
 import { AmountInput } from './AmountInput';
 import { SwapButton } from './SwapButton';
 import { useReownConnect } from '@/hooks/useReownConnect';
@@ -28,12 +27,10 @@ interface SwapCardProps {
   settings: SwapSettings;
   effectiveSlippage?: number; // The actual slippage to use (auto-calculated or manual)
   onSettingsClick: () => void;
-  onFromTokenSelect: (token: Token) => void;
-  onToTokenSelect: (token: Token) => void;
+  onFromTokenClick: () => void;
+  onToTokenClick: () => void;
   onAmountChange: (amount: string) => void;
   onSwapTokens: () => void;
-  dialogType: 'from' | 'to' | null;
-  onDialogChange: (type: 'from' | 'to' | null) => void;
   fromTokenBalance?: string; // Balance of the from token in raw units
   hasBalanceError?: boolean; // Whether there's insufficient balance
   onBalanceError?: (hasError: boolean) => void; // Callback for balance error state
@@ -47,27 +44,16 @@ export const SwapCard = memo(function SwapCard({
   settings,
   effectiveSlippage,
   onSettingsClick,
-  onFromTokenSelect,
-  onToTokenSelect,
+  onFromTokenClick,
+  onToTokenClick,
   onAmountChange,
   onSwapTokens,
-  dialogType,
-  onDialogChange,
   fromTokenBalance,
   hasBalanceError,
   onBalanceError,
 }: SwapCardProps) {
   const { connect, isConnected, account, loading } = useReownConnect();
   const { executeSwap, isExecuting, stepMessage, currentStep, explorerUrl, monitoringProgress } = useSwapExecution();
-
-  const handleSelectToken = useCallback((token: Token) => {
-    if (dialogType === 'from') {
-      onFromTokenSelect(token);
-    } else if (dialogType === 'to') {
-      onToTokenSelect(token);
-    }
-    onDialogChange(null);
-  }, [dialogType, onFromTokenSelect, onToTokenSelect, onDialogChange]);
 
   // Handle swap execution
   const handleSwap = useCallback(async () => {
@@ -138,7 +124,7 @@ export const SwapCard = memo(function SwapCard({
             <TokenSelector
               label="From"
               selectedToken={fromToken}
-              onClick={() => onDialogChange('from')}
+              onClick={onFromTokenClick}
             />
           </div>
 
@@ -152,7 +138,7 @@ export const SwapCard = memo(function SwapCard({
             <TokenSelector
               label="To"
               selectedToken={toToken}
-              onClick={() => onDialogChange('to')}
+              onClick={onToTokenClick}
             />
           </div>
         </div>
@@ -255,13 +241,6 @@ export const SwapCard = memo(function SwapCard({
           )}
         </div>
       </div>
-
-      {/* Token Selection Dialog */}
-      <TokenSelectDialog
-        open={dialogType !== null}
-        onOpenChange={(open) => !open && onDialogChange(null)}
-        onSelectToken={handleSelectToken}
-      />
     </div>
   );
 });

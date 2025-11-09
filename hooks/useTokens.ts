@@ -4,9 +4,7 @@
  * Uses TanStack Query for intelligent caching and background refetching.
  * Tokens are cached for 5 minutes as they don't change frequently.
  *
- * Returns different tokens based on selected network:
- * - Testnet: HBAR and USDC testnet
- * - Mainnet: Full SaucerSwap token list
+ * Fetches full token list from Etaswap API
  *
  * @returns {Object} - TanStack Query result with tokens data
  */
@@ -15,10 +13,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Token } from '@/types/token';
-import { useState, useEffect } from 'react';
 
-async function fetchTokens(network: string): Promise<Token[]> {
-  const response = await fetch(`/api/tokens?network=${network}`);
+async function fetchTokens(): Promise<Token[]> {
+  const response = await fetch(`/api/tokens`);
 
   if (!response.ok) {
     throw new Error('Failed to fetch tokens');
@@ -29,17 +26,9 @@ async function fetchTokens(network: string): Promise<Token[]> {
 }
 
 export function useTokens() {
-  const [network, setNetwork] = useState('testnet');
-
-  useEffect(() => {
-    // Get network from localStorage
-    const savedNetwork = localStorage.getItem('hedera_network') || 'testnet';
-    setNetwork(savedNetwork);
-  }, []);
-
   return useQuery({
-    queryKey: ['tokens', network],
-    queryFn: () => fetchTokens(network),
+    queryKey: ['tokens'],
+    queryFn: () => fetchTokens(),
     staleTime: 5 * 60 * 1000, // 5min - tokens don't change frequently
     gcTime: 60 * 60 * 1000, // 1h
     refetchOnWindowFocus: false,

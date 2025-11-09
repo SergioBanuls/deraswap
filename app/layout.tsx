@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ReownProvider } from "@/contexts/ReownProvider";
-import { NetworkMismatchWarning } from "@/components/NetworkMismatchWarning";
 import { Header } from "@/components/Header";
 import { Toaster } from "sonner";
 
@@ -35,7 +34,6 @@ export default function RootLayout({
         <Providers>
           <ReownProvider>
             <Header />
-            <NetworkMismatchWarning />
             {children}
             <Toaster
               position="bottom-right"

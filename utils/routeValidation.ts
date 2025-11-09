@@ -102,12 +102,9 @@ export function validateRoute(
     const firstToken = path[0];
     const lastToken = path[path.length - 1];
 
-    // Convert to solidity addresses for comparison
-    const fromTokenId = fromToken.id === 'HBAR' ? '0.0.1456986' : fromToken.id;
-    const toTokenId = toToken.id === 'HBAR' ? '0.0.1456986' : toToken.id;
-
-    const fromAddr = '0x' + TokenId.fromString(fromTokenId).toSolidityAddress();
-    const toAddr = '0x' + TokenId.fromString(toTokenId).toSolidityAddress();
+    // Use solidity addresses from token objects
+    const fromAddr = fromToken.solidityAddress;
+    const toAddr = toToken.solidityAddress;
 
     // HBAR native address (0x0) - ETASwap sometimes returns this for HBAR
     const HBAR_NATIVE = '0x0000000000000000000000000000000000000000';

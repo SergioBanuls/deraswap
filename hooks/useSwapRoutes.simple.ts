@@ -14,10 +14,6 @@ import { Token } from '@/types/token';
 import { SwapRoute } from '@/types/route';
 import { validateAmount } from '@/utils/amountValidation';
 
-// Direcciones de SaucerSwap en testnet
-const SAUCERSWAP_TESTNET_API = 'https://api.saucerswap.finance/v1'; // Verificar si existe
-const SAUCERSWAP_TESTNET_POOLS = 'https://api.saucerswap.finance/pools';
-
 interface FetchRoutesParams {
   fromToken: Token;
   toToken: Token;
@@ -95,7 +91,7 @@ async function fetchSimpleRoute({
 
   try {
     // Obtener info del pool
-    const pool = await getSaucerSwapPool(fromToken.id, toToken.id);
+    const pool = await getSaucerSwapPool(fromToken.address, toToken.address);
     
     // Calcular output usando la fórmula x*y=k
     const reserveIn = BigInt(pool.reserveA);
@@ -150,7 +146,7 @@ export function useSwapRoutes(
   slippageTolerance?: number
 ) {
   return useQuery({
-    queryKey: ['swapRoutes', 'testnet-simple', fromToken?.id, toToken?.id, amount],
+    queryKey: ['swapRoutes', 'testnet-simple', fromToken?.address, toToken?.address, amount],
     queryFn: () => {
       if (!fromToken || !toToken || !amount || amount === '0') {
         return Promise.resolve([]);

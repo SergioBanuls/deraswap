@@ -44,20 +44,14 @@ async function tryRouteViaUSDC(
   inputAmount: string
 ): Promise<SwapRoute[] | null> {
   // Don't try if either token is USDC itself
-  if (fromToken.id === USDC_TOKEN_ID || toToken.id === USDC_TOKEN_ID) {
+  if (fromToken.address === USDC_TOKEN_ID || toToken.address === USDC_TOKEN_ID) {
     return null;
   }
 
   try {
-    // Convert token IDs to EVM addresses
-    const fromTokenAddress = fromToken.id === 'HBAR'
-      ? '0x0000000000000000000000000000000000000000'
-      : '0x' + TokenId.fromString(fromToken.id).toSolidityAddress();
-
-    const toTokenAddress = toToken.id === 'HBAR'
-      ? '0x0000000000000000000000000000000000000000'
-      : '0x' + TokenId.fromString(toToken.id).toSolidityAddress();
-
+    // Use solidity addresses from token objects
+    const fromTokenAddress = fromToken.solidityAddress;
+    const toTokenAddress = toToken.solidityAddress;
     const usdcAddress = '0x' + TokenId.fromString(USDC_TOKEN_ID).toSolidityAddress();
 
     // Step 1: Get route from fromToken → USDC
@@ -131,16 +125,10 @@ async function fetchSwapRoutes({
   // Use validated/sanitized amount
   const inputAmount = validation.sanitized!;
 
-  // IMPORTANT: ETASwap API expects address zero for HBAR native, NOT wHBAR
-  // We must NOT convert HBAR to wHBAR when querying the API
-  // The adapter will handle HBAR → wHBAR conversion internally
-  const tokenFromAddress = fromToken.id === 'HBAR'
-    ? '0x0000000000000000000000000000000000000000'  // HBAR native
-    : '0x' + TokenId.fromString(fromToken.id).toSolidityAddress();
-
-  const tokenToAddress = toToken.id === 'HBAR'
-    ? '0x0000000000000000000000000000000000000000'  // HBAR native
-    : '0x' + TokenId.fromString(toToken.id).toSolidityAddress();
+  // Use solidity addresses directly from token objects
+  // Etaswap API provides solidityAddress for all tokens (HBAR is 0x0...0)
+  const tokenFromAddress = fromToken.solidityAddress;
+  const tokenToAddress = toToken.solidityAddress;
 
   // Fetch routes from ETASwap API
   const url = `${ETASWAP_API_BASE_URL}/rates`;
@@ -231,8 +219,8 @@ async function fetchSwapRoutes({
     const inputAmountHuman = parseFloat(formatAmount(inputAmount, fromToken.decimals));
     const outputAmountHuman = parseFloat(outputAmountFormatted);
 
-    const expectedValueUSD = inputAmountHuman * fromToken.priceUsd;
-    const actualValueUSD = outputAmountHuman * toToken.priceUsd;
+    const expectedValueUSD = inputAmountHuman * (fromToken?.priceUsd || 0);
+    const actualValueUSD = outputAmountHuman * (toToken.priceUsd || 0);
 
     // Calculate price impact as percentage difference
     const priceImpact = expectedValueUSD > 0
@@ -289,7 +277,7 @@ export function useSwapRoutes(
   isAutoMode?: boolean
 ) {
   return useQuery({
-    queryKey: ['swapRoutes', fromToken?.id, toToken?.id, amount, isAutoMode ? 'auto' : slippageTolerance],
+    queryKey: ['swapRoutes', fromToken?.address, toToken?.address, amount, isAutoMode ? 'auto' : slippageTolerance],
     queryFn: () =>
       fetchSwapRoutes({
         fromToken: fromToken!,

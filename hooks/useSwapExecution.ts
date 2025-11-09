@@ -151,14 +151,14 @@ export function useSwapExecution() {
         // Step 1: Validate parameters
         updateState('validating');
 
-        // DEBUG: Log token IDs
+        // DEBUG: Log token addresses
         console.log('🔍 DEBUG fromToken:', {
-          id: params.fromToken.id,
+          address: params.fromToken.address,
           symbol: params.fromToken.symbol,
           name: params.fromToken.name
         });
         console.log('🔍 DEBUG toToken:', {
-          id: params.toToken.id,
+          address: params.toToken.address,
           symbol: params.toToken.symbol,
           name: params.toToken.name
         });
@@ -181,8 +181,8 @@ export function useSwapExecution() {
         updateState('ensuring_adapter_tokens');
 
         const tokensToCheck: string[] = [];
-        if (params.fromToken.id !== 'HBAR') tokensToCheck.push(params.fromToken.id);
-        if (params.toToken.id !== 'HBAR') tokensToCheck.push(params.toToken.id);
+        if (params.fromToken.address !== '') tokensToCheck.push(params.fromToken.address);
+        if (params.toToken.address !== '') tokensToCheck.push(params.toToken.address);
 
         console.log('🔍 Tokens to check for adapter association:', tokensToCheck);
         
@@ -197,11 +197,11 @@ export function useSwapExecution() {
         }
 
         // Step 3: Check token association for destination token (skip for HBAR)
-        if (params.toToken.id !== 'HBAR') {
+        if (params.toToken.address !== '') {
           updateState('checking_association');
 
           const associationParams: AssociateTokenParams = {
-            tokenId: params.toToken.id,
+            tokenId: params.toToken.address,
             accountId: account,
           };
 
@@ -244,14 +244,14 @@ export function useSwapExecution() {
         }
 
         // Step 3: Check allowance (skip for HBAR)
-        if (params.fromToken.id !== 'HBAR') {
+        if (params.fromToken.address !== '') {
           updateState('checking_allowance');
 
           const router = getActiveRouter();
           const requiredAmount = calculateAllowanceWithBuffer(params.inputAmount);
 
           const approvalParams: ApprovalParams = {
-            tokenId: params.fromToken.id,
+            tokenId: params.fromToken.address,
             amount: requiredAmount,
             ownerAccountId: account,
             spenderAddress: router.address,
@@ -299,7 +299,7 @@ export function useSwapExecution() {
 
         // CRITICAL: When swapping FROM HBAR, we MUST use signer
         // to properly serialize the payableAmount field
-        const isHbarSwap = params.fromToken.id === 'HBAR';
+        const isHbarSwap = params.fromToken.address === '';
         const txParamsWithSigner = isHbarSwap
           ? { ...txParams, signer }
           : txParams;
