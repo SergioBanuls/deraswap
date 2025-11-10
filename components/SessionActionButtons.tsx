@@ -1,26 +1,30 @@
 'use client'
 
 import { useState } from 'react'
-import { useReownConnect } from '@/hooks/useReownConnect'
+import { useReownContext, WalletType } from '@/contexts/ReownProvider'
 import { AccountDialog } from './AccountDialog'
-import { Button } from './ui/button';
+import { Button } from './ui/button'
+import { WalletConnectionModal } from './WalletConnectionModal'
 
 export function SessionActionButtons() {
-    const { account, loading, isConnected, disconnect, connect } = useReownConnect();
+    const { account, loading, isConnected, disconnect, connectWithWallet } =
+        useReownContext()
 
     const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false)
+    const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
 
-    const handleClick = () => {
-        if (isConnected) {
-            disconnect();
-        } else {
-            connect();
-        }
-    };
+    const handleConnectClick = () => {
+        setIsWalletModalOpen(true)
+    }
+
+    const handleWalletSelect = async (walletType: WalletType) => {
+        setIsWalletModalOpen(false)
+        await connectWithWallet(walletType)
+    }
 
     const formatAccount = (acc: string) => {
-        return `${acc.slice(0, 6)}...${acc.slice(-4)}`;
-    };
+        return `${acc.slice(0, 6)}...${acc.slice(-4)}`
+    }
 
     if (account)
         return (
@@ -39,11 +43,22 @@ export function SessionActionButtons() {
             </>
         )
 
-    return (<button
-        onClick={handleClick}
-        disabled={loading}
-        className="px-6 py-2 from-p bg-blue-500 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-all duration-200 text-white"
-    >
-        {loading ? 'Connecting...' : isConnected && account ? formatAccount(account) : 'Connect Wallet'}
-    </button>)
+    return (
+        <>
+            <button
+                onClick={handleConnectClick}
+                disabled={loading}
+                className='px-6 py-2 from-p bg-blue-500 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-all duration-200 text-white'
+            >
+                {loading ? 'Connecting...' : 'Connect Wallet'}
+            </button>
+
+            <WalletConnectionModal
+                open={isWalletModalOpen}
+                onOpenChange={setIsWalletModalOpen}
+                onSelectWallet={handleWalletSelect}
+                loading={loading}
+            />
+        </>
+    )
 }
