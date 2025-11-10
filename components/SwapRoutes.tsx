@@ -23,19 +23,11 @@ interface SwapRoutesProps {
   onRouteSelect?: (route: SwapRoute) => void;
 }
 
-// Helper function to estimate time based on gas
-function estimateTime(gasEstimate: number): string {
-  // Simple estimation: higher gas = potentially longer time
-  if (gasEstimate > 3000000) return '35s';
-  if (gasEstimate > 2000000) return '4m';
-  return '3s';
-}
-
 // Helper function to format gas cost
 function formatGasCost(gasEstimate: number): string {
   // Simplified gas cost calculation (this should be replaced with actual calculation)
   const costInDollars = (gasEstimate / 1000000) * 0.01;
-  return costInDollars < 0.01 ? '<$0.01' : `$${costInDollars.toFixed(2)}`;
+  return costInDollars < 0.01 ? '$0.01' : `$${costInDollars.toFixed(2)}`;
 }
 
 export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount, slippageTolerance, autoSlippage, onRouteSelect }: SwapRoutesProps) {
@@ -166,10 +158,6 @@ export const SwapRoutes = memo(function SwapRoutes({ fromToken, toToken, amount,
                   <div className="flex items-center gap-1.5 text-white/60">
                     <Fuel className="w-4 h-4" />
                     <span>{formatGasCost(route.gasEstimate)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-white/60">
-                    <Clock className="w-4 h-4" />
-                    <span>{estimateTime(route.gasEstimate)}</span>
                   </div>
                 </div>
               </div>

@@ -25,19 +25,19 @@ function formatBalance(balance: string, decimals: number): string {
   
   // Format with appropriate decimal places
   if (num === 0) return '0';
-  if (num < 0.01) return num.toFixed(6);
-  if (num < 1) return num.toFixed(4);
-  if (num < 1000) return num.toFixed(2);
+  if (num < 0.01) return parseFloat(num.toFixed(6)).toString();
+  if (num < 1) return parseFloat(num.toFixed(4)).toString();
+  if (num < 1000) return parseFloat(num.toFixed(4)).toString();
   
   // For larger numbers, use compact notation
   if (num >= 1_000_000) {
-    return (num / 1_000_000).toFixed(2) + 'M';
+    return parseFloat((num / 1_000_000).toFixed(2)).toString() + 'M';
   }
   if (num >= 1_000) {
-    return (num / 1_000).toFixed(2) + 'K';
+    return parseFloat((num / 1_000).toFixed(2)).toString() + 'K';
   }
   
-  return num.toFixed(2);
+  return parseFloat(num.toFixed(4)).toString();
 }
 
 export function TokenSelectCard({
