@@ -1,59 +1,83 @@
 /**
- * Hook for fetching and auto-updating token price
+ * Hook for accessing cached token prices
  *
- * Uses TanStack Query for intelligent caching and automatic refetching.
- * Optimized to prevent rate limiting by:
- * - Using longer cache times (60s stale, 2min refetch)
- * - Smart retry strategy with exponential backoff
- * - Graceful handling of 429 errors
+ * Uses TanStack Query to fetch and cache ALL token prices at once.
+ * Prices are fetched from SaucerSwap API and cached in memory.
+ * Auto-updates every 1 minute.
  *
- * @param tokenId - The token ID to fetch price for
- * @param initialPrice - Initial price to use as placeholder
- * @returns Current price in USD
+ * This is much more efficient than individual price queries:
+ * - Single API call for all tokens
+ * - No rate limiting issues
+ * - Instant price lookup from cache
+ * - Background updates every minute
  */
 
-'use client';
+'use client'
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-async function fetchTokenPrice(tokenId: string): Promise<number> {
-  const response = await fetch(`/api/tokens/${tokenId}`);
+/**
+ * Fetches all token prices from our API endpoint
+ */
+async function fetchAllTokenPrices(): Promise<Record<string, number>> {
+    const response = await fetch('/api/token-prices')
 
-  if (!response.ok) {
-    if (response.status === 429) {
-      // Rate limited - throw specific error to trigger retry
-      throw new Error('RATE_LIMITED');
+    if (!response.ok) {
+        throw new Error('Failed to fetch token prices')
     }
-    throw new Error('Failed to fetch price');
-  }
 
-  const data = await response.json();
-  return data.priceUsd;
+    return response.json()
 }
 
-export function useTokenPrice(tokenId: string | null, initialPrice: number = 0) {
-  const { data } = useQuery({
-    queryKey: ['tokenPrice', tokenId],
-    queryFn: () => fetchTokenPrice(tokenId!),
-    enabled: !!tokenId,
-    staleTime: 60 * 1000, // 60s - keep cached data fresh longer
-    gcTime: 5 * 60 * 1000, // 5min - keep in cache
-    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes (less aggressive)
-    refetchOnWindowFocus: false, // Don't refetch on window focus to avoid bursts
-    placeholderData: initialPrice,
-    retry: (failureCount, error) => {
-      // Don't retry rate limit errors aggressively
-      if (error instanceof Error && error.message === 'RATE_LIMITED') {
-        return failureCount < 2; // Only retry twice for rate limits
-      }
-      return failureCount < 3; // Standard retry for other errors
-    },
-    retryDelay: (attemptIndex) => {
-      // Exponential backoff: 2s, 4s, 8s...
-      return Math.min(2000 * Math.pow(2, attemptIndex), 30000);
-    },
-  });
-
-  return data ?? initialPrice;
+/**
+ * Hook that fetches and caches all token prices
+ * ⚠️ ONLY call this in TokenPricesProvider - NOT in individual components!
+ */
+export function useTokenPrices() {
+    return useQuery({
+        queryKey: ['tokenPrices'],
+        queryFn: fetchAllTokenPrices,
+        staleTime: 60 * 1000, // 1 minute
+        gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+        refetchInterval: 60 * 1000, // Refetch every 1 minute
+        refetchOnWindowFocus: false, // Don't refetch on focus to avoid extra calls
+        refetchOnReconnect: true, // Refetch when reconnecting
+        refetchOnMount: false, // Don't refetch if data exists
+        retry: 3,
+        retryDelay: (attemptIndex) =>
+            Math.min(1000 * Math.pow(2, attemptIndex), 10000),
+    })
 }
 
+/**
+ * Hook to get a specific token's price from the cached prices
+ * This ONLY reads from cache, never triggers a fetch
+ *
+ * @param tokenId - The token ID (e.g., '0.0.456858', 'HBAR', or '' for HBAR)
+ * @param fallbackPrice - Price to return if not found in cache
+ * @returns Current price in USD
+ */
+export function useTokenPrice(
+    tokenId: string | null,
+    fallbackPrice: number = 0
+): number {
+    const queryClient = useQueryClient()
+
+    // Only read from cache, never fetch
+    const prices = queryClient.getQueryData<Record<string, number>>([
+        'tokenPrices',
+    ])
+
+    if (!prices) {
+        return fallbackPrice
+    }
+
+    // Handle HBAR special cases - empty string or null means HBAR
+    if (!tokenId || tokenId === '') {
+        // Priority: 'HBAR' key, then empty string key, then fallback
+        return prices['HBAR'] ?? prices[''] ?? fallbackPrice
+    }
+
+    // For all other tokens, use their ID directly
+    return prices[tokenId] ?? fallbackPrice
+}
