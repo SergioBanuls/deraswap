@@ -148,18 +148,35 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
                                 )}`
                             }
 
-                            console.log('🔗 Abriendo:', deepLink)
+                            console.log('🔗 Abriendo deep link:', deepLink)
 
-                            // Abrir en una nueva ventana y cerrarla inmediatamente
-                            // Esto activa la extensión sin mantener pestañas abiertas
-                            const popup = window.open(deepLink, '_blank')
+                            // Crear un iframe oculto que cargue el deep link
+                            // Esto activará la extensión sin redirigir la página actual
+                            const iframe = document.createElement('iframe')
+                            iframe.style.display = 'none'
+                            iframe.src = deepLink
+                            document.body.appendChild(iframe)
 
-                            // Intentar cerrar la ventana después de un breve momento
+                            // También intentar abrir en una nueva pestaña como respaldo
+                            // Si la extensión está instalada, capturará el deep link
+                            const newWindow = window.open(
+                                deepLink,
+                                '_blank',
+                                'width=400,height=600'
+                            )
+
+                            // Limpiar el iframe después de un momento
                             setTimeout(() => {
-                                if (popup) {
-                                    popup.close()
+                                if (iframe && iframe.parentNode) {
+                                    document.body.removeChild(iframe)
                                 }
-                            }, 500)
+                                // Si la ventana se abrió pero no se pudo conectar, podemos cerrarla
+                                // después de que el usuario apruebe en la extensión
+                            }, 3000)
+
+                            console.log(
+                                '✅ Deep link activado - esperando respuesta del wallet'
+                            )
                         },
                         undefined, // pairing topic
                         undefined // no extension ID, para que genere el URI
