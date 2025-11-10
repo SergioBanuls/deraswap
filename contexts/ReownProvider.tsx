@@ -70,9 +70,6 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
     const [isInitialized, setIsInitialized] = useState(false)
     const [signer, setSigner] = useState<any | null>(null)
     const [walletType, setWalletType] = useState<WalletType | null>(null)
-    const [hashpackPairingString, setHashpackPairingString] = useState<
-        string | null
-    >(null)
 
     // Inicializa DAppConnector de Hedera con Reown
     const initializeDAppConnector = useCallback(() => {
@@ -105,137 +102,90 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
         }
     }, [])
 
-    // Función para conectar con un wallet específico
+    // Función para conectar usando el modal por defecto de WalletConnect
+    const connect = useCallback(async () => {
+        setLoading(true)
+
+        try {
+            const connector = initializeDAppConnector()
+            if (!connector) {
+                throw new Error('No se pudo inicializar el conector')
+            }
+
+            // Inicializar el conector
+            await connector.init({ logger: 'error' })
+            console.log('✅ DAppConnector inicializado')
+
+            // Abrir el modal por defecto de WalletConnect que incluye HashPack, Kabila, etc.
+            console.log(
+                '🔌 Abriendo modal de WalletConnect con wallets de Hedera...'
+            )
+            await connector.openModal()
+
+            // Esperar a que se complete la conexión
+            const session = connector.signers[0]
+            console.log('📝 Signers encontrados:', connector.signers.length)
+
+            if (session) {
+                const accountId = session.getAccountId()
+                console.log('✅ Cuenta conectada:', accountId.toString())
+
+                // Intentar detectar el tipo de wallet desde los metadatos de la sesión
+                const sessionMetadata = session.getMetadata()
+                let detectedWalletType: WalletType = 'walletconnect'
+
+                if (sessionMetadata?.name?.toLowerCase().includes('hashpack')) {
+                    detectedWalletType = 'hashpack'
+                } else if (
+                    sessionMetadata?.name?.toLowerCase().includes('kabila')
+                ) {
+                    detectedWalletType = 'kabila'
+                }
+
+                console.log(
+                    '� Wallet detectado:',
+                    detectedWalletType,
+                    'Metadata:',
+                    sessionMetadata
+                )
+
+                setAccount(accountId.toString())
+                setSigner(session)
+                setIsConnected(true)
+                setWalletType(detectedWalletType)
+
+                // Guardar sesión en localStorage para persistencia
+                localStorage.setItem('hedera_wallet_connected', 'true')
+                localStorage.setItem('hedera_account_id', accountId.toString())
+                localStorage.setItem('hedera_wallet_type', detectedWalletType)
+            } else {
+                console.warn(
+                    '⚠️ No se encontró ninguna sesión/signer después de la conexión'
+                )
+            }
+        } catch (error) {
+            console.error('❌ Error de conexión:', error)
+            const errorMessage = (error as Error).message
+            if (
+                !errorMessage.includes('User rejected') &&
+                !errorMessage.includes('User closed modal')
+            ) {
+                alert('Error al conectar: ' + errorMessage)
+            }
+        } finally {
+            setLoading(false)
+        }
+    }, [initializeDAppConnector])
+
+    // Función para conectar con un wallet específico (ahora usa el modal por defecto)
     const connectWithWallet = useCallback(
         async (selectedWalletType: WalletType) => {
-            setLoading(true)
-
-            try {
-                const connector = initializeDAppConnector()
-                if (!connector) {
-                    throw new Error('No se pudo inicializar el conector')
-                }
-
-                // Inicializar el conector
-                await connector.init({ logger: 'error' })
-                console.log('✅ DAppConnector inicializado')
-
-                if (
-                    selectedWalletType === 'hashpack' ||
-                    selectedWalletType === 'kabila'
-                ) {
-                    // Para HashPack y Kabila, generamos la URI y redirigimos directamente
-                    console.log(
-                        `🔌 Conectando directamente con ${selectedWalletType}...`
-                    )
-
-                    await connector.connect(
-                        (uri) => {
-                            // Obtenemos la URI de WalletConnect
-                            console.log('📱 URI generada:', uri)
-
-                            // Redirigir a la aplicación correspondiente
-                            let deepLink = ''
-                            if (selectedWalletType === 'hashpack') {
-                                // HashPack usa este formato de deep link
-                                deepLink = `https://link.hashpack.app/wc?uri=${encodeURIComponent(
-                                    uri
-                                )}`
-                            } else if (selectedWalletType === 'kabila') {
-                                // Kabila usa este formato de deep link
-                                deepLink = `https://wallet.kabila.app/wc?uri=${encodeURIComponent(
-                                    uri
-                                )}`
-                            }
-
-                            console.log('🔗 Abriendo deep link:', deepLink)
-
-                            // Crear un iframe oculto que cargue el deep link
-                            // Esto activará la extensión sin redirigir la página actual
-                            const iframe = document.createElement('iframe')
-                            iframe.style.display = 'none'
-                            iframe.src = deepLink
-                            document.body.appendChild(iframe)
-
-                            // También intentar abrir en una nueva pestaña como respaldo
-                            // Si la extensión está instalada, capturará el deep link
-                            const newWindow = window.open(
-                                deepLink,
-                                '_blank',
-                                'width=400,height=600'
-                            )
-
-                            // Limpiar el iframe después de un momento
-                            setTimeout(() => {
-                                if (iframe && iframe.parentNode) {
-                                    document.body.removeChild(iframe)
-                                }
-                                // Si la ventana se abrió pero no se pudo conectar, podemos cerrarla
-                                // después de que el usuario apruebe en la extensión
-                            }, 3000)
-
-                            console.log(
-                                '✅ Deep link activado - esperando respuesta del wallet'
-                            )
-                        },
-                        undefined, // pairing topic
-                        undefined // no extension ID, para que genere el URI
-                    )
-                } else {
-                    // Para WalletConnect (otros wallets), abrimos el modal con QR
-                    console.log('🔌 Abriendo modal de WalletConnect...')
-                    await connector.openModal()
-                }
-
-                // Esperar a que se complete la conexión
-                const session = connector.signers[0]
-                console.log('📝 Signers encontrados:', connector.signers.length)
-
-                if (session) {
-                    const accountId = session.getAccountId()
-                    console.log('✅ Cuenta conectada:', accountId.toString())
-                    setAccount(accountId.toString())
-                    setSigner(session)
-                    setIsConnected(true)
-                    setWalletType(selectedWalletType)
-
-                    // Guardar sesión en localStorage para persistencia
-                    localStorage.setItem('hedera_wallet_connected', 'true')
-                    localStorage.setItem(
-                        'hedera_account_id',
-                        accountId.toString()
-                    )
-                    localStorage.setItem(
-                        'hedera_wallet_type',
-                        selectedWalletType
-                    )
-                } else {
-                    console.warn(
-                        '⚠️ No se encontró ninguna sesión/signer después de la conexión'
-                    )
-                }
-            } catch (error) {
-                console.error('❌ Error de conexión:', error)
-                const errorMessage = (error as Error).message
-                if (
-                    !errorMessage.includes('User rejected') &&
-                    !errorMessage.includes('User closed modal')
-                ) {
-                    alert('Error al conectar: ' + errorMessage)
-                }
-            } finally {
-                setLoading(false)
-            }
+            // Por ahora, simplemente llamamos a connect() que abre el modal
+            // El usuario puede seleccionar el wallet que prefiera desde el modal
+            await connect()
         },
-        [initializeDAppConnector]
+        [connect]
     )
-
-    // Función legacy para abrir el modal de selección (se usará en SessionActionButtons)
-    const connect = useCallback(async () => {
-        // Esta función ahora solo sirve como placeholder
-        // El modal se abrirá desde SessionActionButtons
-        console.log('connect() called - should open wallet selection modal')
-    }, [])
 
     // Función para desconectar
     const disconnect = useCallback(async () => {
@@ -249,13 +199,11 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
             setAccount(null)
             setSigner(null)
             setWalletType(null)
-            setHashpackPairingString(null)
 
             // Limpiar localStorage
             localStorage.removeItem('hedera_wallet_connected')
             localStorage.removeItem('hedera_account_id')
             localStorage.removeItem('hedera_wallet_type')
-            localStorage.removeItem('hedera_pairing_string')
         } catch (error) {
             console.error('Error disconnecting:', error)
         }
@@ -361,9 +309,6 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
             const savedWalletType = localStorage.getItem(
                 'hedera_wallet_type'
             ) as WalletType | null
-            const savedPairingString = localStorage.getItem(
-                'hedera_pairing_string'
-            )
 
             if (wasConnected === 'true' && savedAccount && savedWalletType) {
                 console.log('🔄 Restaurando sesión guardada...')
@@ -371,7 +316,6 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
                 setLoading(true)
 
                 try {
-                    // Todos los tipos de wallet usan DAppConnector
                     const connector = initializeDAppConnector()
                     if (!connector) {
                         throw new Error('No se pudo inicializar el conector')
@@ -403,7 +347,6 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
                     localStorage.removeItem('hedera_wallet_connected')
                     localStorage.removeItem('hedera_account_id')
                     localStorage.removeItem('hedera_wallet_type')
-                    localStorage.removeItem('hedera_pairing_string')
                 } finally {
                     setLoading(false)
                     setIsInitialized(true)
