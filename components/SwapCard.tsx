@@ -133,6 +133,16 @@ export const SwapCard = memo(function SwapCard({
         !isExecuting &&
         !hasBalanceError // Disable if insufficient balance
 
+    // Debug log
+    console.log('SwapCard state:', {
+        fromToken: fromToken?.symbol,
+        toToken: toToken?.symbol,
+        amount,
+        hasBalanceError,
+        canSwap,
+        isExecuting,
+    })
+
     return (
         <div className='w-full'>
             <div className='bg-neutral-900 rounded-3xl p-6 min-h-[420px] flex flex-col'>
@@ -214,7 +224,11 @@ export const SwapCard = memo(function SwapCard({
                                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                                 }`}
                             >
-                                Swap
+                                {hasBalanceError
+                                    ? 'Insufficient funds'
+                                    : isExecuting
+                                    ? 'Swapping...'
+                                    : 'Swap'}
                             </button>
                             {isExecuting && currentStep && (
                                 <div className='text-xs text-white/50 text-center space-y-1'>
