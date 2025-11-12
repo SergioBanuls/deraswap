@@ -25,10 +25,47 @@ interface SwapRoutesProps {
 }
 
 // Helper function to format gas cost
-function formatGasCost(gasEstimate: number): string {
-    // Simplified gas cost calculation (this should be replaced with actual calculation)
-    const costInDollars = (gasEstimate / 1000000) * 0.01
-    return costInDollars < 0.01 ? '$0.01' : `$${costInDollars.toFixed(2)}`
+function formatGasCost(
+    gasEstimate: number,
+    hbarPrice: number = 0
+): {
+    usd: string | null
+    hbar: string
+} {
+    // Gas cost calculation based on EtaSwap's approach:
+    // gasEstimate is the estimated gas units
+    // Each gas unit costs approximately 0.000000082 HBAR
+    const approxCost1Gas = 0.000000082
+    const costInHbar = gasEstimate * approxCost1Gas
+
+    const hbar = `${costInHbar.toFixed(4)} HBAR`
+
+    // Convert to USD if price is available
+    if (hbarPrice > 0) {
+        const costInDollars = costInHbar * hbarPrice
+        const usd =
+            costInDollars < 0.01 ? '<$0.01' : `$${costInDollars.toFixed(2)}`
+        return { usd, hbar }
+    }
+
+    // Only HBAR if no price available
+    return { usd: null, hbar }
+}
+
+// Helper function to calculate minimum receive with slippage
+function calculateMinimumReceive(
+    outputAmount: string,
+    slippageTolerance: number,
+    decimals: number
+): string {
+    // Parse the output amount (human-readable format)
+    const amount = parseFloat(outputAmount)
+
+    // Apply slippage: minReceive = amount * (1 - slippage/100)
+    const minReceive = amount * (1 - slippageTolerance / 100)
+
+    // Format with appropriate decimals
+    return minReceive.toFixed(Math.min(decimals, 6))
 }
 
 export const SwapRoutes = memo(function SwapRoutes({
@@ -255,7 +292,7 @@ export const SwapRoutes = memo(function SwapRoutes({
                                 </div>
 
                                 {/* Exchange Summary and Gas/Time */}
-                                <div className='flex items-center justify-between text-sm'>
+                                <div className='flex items-end justify-between text-sm'>
                                     <div className='text-white/50'>
                                         1 {fromToken.symbol} ≈{' '}
                                         {(
@@ -266,14 +303,49 @@ export const SwapRoutes = memo(function SwapRoutes({
                                         {toToken.symbol}
                                     </div>
                                     <div className='flex items-center gap-4'>
-                                        <div className='flex items-center gap-1.5 text-white/60'>
-                                            <Fuel className='w-4 h-4' />
-                                            <span>
-                                                {formatGasCost(
-                                                    route.gasEstimate
-                                                )}
-                                            </span>
-                                        </div>
+                                        {(() => {
+                                            const gasCost = formatGasCost(
+                                                route.gasEstimate,
+                                                prices?.['HBAR'] || 0
+                                            )
+                                            return (
+                                                <div className='flex flex-col items-end text-white/60'>
+                                                    <div className='flex items-center gap-1.5'>
+                                                        <Fuel className='w-4 h-4' />
+                                                        <span className='text-sm'>
+                                                            {gasCost.usd ||
+                                                                gasCost.hbar}
+                                                        </span>
+                                                    </div>
+                                                    {gasCost.usd && (
+                                                        <span className='text-xs text-white/40'>
+                                                            {gasCost.hbar}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )
+                                        })()}
+                                    </div>
+                                </div>
+
+                                {/* Minimum Receive */}
+                                <div className='mt-3 pt-3 border-t border-white/10'>
+                                    <div className='flex items-center justify-between text-sm'>
+                                        <span className='text-white/50'>
+                                            Min. receive
+                                        </span>
+                                        <span className='text-white font-medium'>
+                                            {calculateMinimumReceive(
+                                                route.outputAmountFormatted,
+                                                slippageTolerance,
+                                                toToken.decimals
+                                            )}{' '}
+                                            {toToken.symbol}
+                                        </span>
+                                    </div>
+                                    <div className='text-xs text-white/40 mt-1 text-right'>
+                                        With {slippageTolerance.toFixed(2)}%
+                                        slippage tolerance
                                     </div>
                                 </div>
                             </div>
