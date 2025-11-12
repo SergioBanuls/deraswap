@@ -12,7 +12,7 @@ import { Token } from '@/types/token'
 import { SwapRoute } from '@/types/route'
 import { useSwapRoutes } from '@/hooks/useSwapRoutes'
 import { useTokenPricesContext } from '@/contexts/TokenPricesProvider'
-import { ChevronDown, Fuel, Clock } from 'lucide-react'
+import { Fuel } from 'lucide-react'
 import { RouteCardSkeleton } from './RouteCardSkeleton'
 
 interface SwapRoutesProps {
@@ -252,11 +252,6 @@ export const SwapRoutes = memo(function SwapRoutes({
                                             </div>
                                         </div>
                                     </div>
-                                    <ChevronDown
-                                        className={`w-5 h-5 text-white/40 transition-transform ${
-                                            isSelected ? 'rotate-180' : ''
-                                        }`}
-                                    />
                                 </div>
 
                                 {/* Exchange Summary and Gas/Time */}
