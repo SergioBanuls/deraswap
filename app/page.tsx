@@ -19,6 +19,7 @@ export default function Home() {
     const [toToken, setToToken] = useState<Token | null>(null)
     const [amount, setAmount] = useState('')
     const [selectedRoute, setSelectedRoute] = useState<SwapRoute | null>(null)
+    const [hasBalanceError, setHasBalanceError] = useState(false)
     const [view, setView] = useState<'swap' | 'settings' | 'selectToken'>(
         'swap'
     )
@@ -173,6 +174,8 @@ export default function Home() {
                                 onAmountChange={setAmount}
                                 onSwapTokens={handleSwapTokens}
                                 fromTokenBalance={fromTokenBalance}
+                                hasBalanceError={hasBalanceError}
+                                onBalanceError={setHasBalanceError}
                             />
                         ) : view === 'settings' ? (
                             <SettingsCard

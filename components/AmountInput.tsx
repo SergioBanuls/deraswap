@@ -53,7 +53,15 @@ export function AmountInput({
         const amountValue = parseFloat(value)
         const balanceValue = parseFloat(formatAmount(balance, token.decimals))
 
+        console.log('Balance check:', {
+            token: token.symbol,
+            amountValue,
+            balanceValue,
+            exceeds: amountValue > balanceValue,
+        })
+
         if (amountValue > balanceValue) {
+            console.log('🚫 Balance exceeded! Calling onBalanceError(true)')
             onBalanceError?.(true)
             return true
         }
@@ -88,6 +96,7 @@ export function AmountInput({
         }
 
         onAmountChange(value)
+        checkBalanceError(value)
     }
 
     const handleMaxClick = () => {
