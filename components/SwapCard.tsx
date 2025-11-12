@@ -7,7 +7,7 @@
 
 'use client'
 
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback, useState, useEffect } from 'react'
 import { Token } from '@/types/token'
 import { SwapRoute } from '@/types/route'
 import { SwapSettings } from '@/types/swap'
@@ -17,6 +17,8 @@ import { SwapButton } from './SwapButton'
 import { WalletConnectionModal } from './WalletConnectionModal'
 import { useReownConnect } from '@/hooks/useReownConnect'
 import { useSwapExecution } from '@/hooks/useSwapExecution'
+import { useCheckUserTokenAssociation } from '@/hooks/useCheckUserTokenAssociation'
+import { useAssociateToken } from '@/hooks/useAssociateToken'
 import { validateAmount } from '@/utils/amountValidation'
 import { Settings } from 'lucide-react'
 import { WalletType } from '@/contexts/ReownProvider'
@@ -64,6 +66,16 @@ export const SwapCard = memo(function SwapCard({
         explorerUrl,
         monitoringProgress,
     } = useSwapExecution()
+    const {
+        isAssociated,
+        isChecking,
+        refresh: refreshTokenAssociation,
+    } = useCheckUserTokenAssociation(account, toToken?.address || null)
+    const {
+        associateToken,
+        isAssociating,
+        error: associationError,
+    } = useAssociateToken()
     const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
 
     // Handle wallet selection
@@ -74,6 +86,24 @@ export const SwapCard = memo(function SwapCard({
         },
         [connectWithWallet]
     )
+
+    // Handle token association
+    const handleAssociateToken = useCallback(async () => {
+        if (!toToken) return
+
+        console.log('🔗 Starting token association for', toToken.symbol)
+        const success = await associateToken(toToken.address)
+
+        if (success) {
+            console.log('✅ Token associated successfully')
+            // Wait a moment for the network to propagate the change
+            setTimeout(() => {
+                refreshTokenAssociation()
+            }, 2000)
+        } else {
+            console.error('❌ Token association failed:', associationError)
+        }
+    }, [toToken, associateToken, associationError, refreshTokenAssociation])
 
     // Handle swap execution
     const handleSwap = useCallback(async () => {
@@ -131,7 +161,12 @@ export const SwapCard = memo(function SwapCard({
         parseFloat(amount) > 0 &&
         selectedRoute &&
         !isExecuting &&
-        !hasBalanceError // Disable if insufficient balance
+        !hasBalanceError && // Disable if insufficient balance
+        isAssociated // Only enable if token is associated
+
+    // Determine if we need to show associate button
+    const needsAssociation =
+        isConnected && toToken && !isAssociated && !isChecking
 
     // Debug log
     console.log('SwapCard state:', {
@@ -141,6 +176,9 @@ export const SwapCard = memo(function SwapCard({
         hasBalanceError,
         canSwap,
         isExecuting,
+        isAssociated,
+        isChecking,
+        needsAssociation,
     })
 
     return (
@@ -197,7 +235,7 @@ export const SwapCard = memo(function SwapCard({
                     />
                 </div>
 
-                {/* Connect Wallet / Swap Button */}
+                {/* Connect Wallet / Associate Token / Swap Button */}
                 <div className='mt-6'>
                     {!isConnected ? (
                         <button
@@ -211,6 +249,31 @@ export const SwapCard = memo(function SwapCard({
                         >
                             {loading ? 'Connecting...' : 'Connect wallet'}
                         </button>
+                    ) : needsAssociation ? (
+                        <div className='space-y-3'>
+                            <button
+                                onClick={handleAssociateToken}
+                                disabled={isAssociating}
+                                className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                                    isAssociating
+                                        ? 'bg-purple-500/50 text-white cursor-wait'
+                                        : 'bg-purple-500 hover:bg-purple-600 text-white'
+                                }`}
+                            >
+                                {isAssociating
+                                    ? 'Associating...'
+                                    : `Associate ${toToken?.symbol || 'Token'}`}
+                            </button>
+                            {associationError && (
+                                <div className='text-xs text-red-400 text-center'>
+                                    {associationError}
+                                </div>
+                            )}
+                            <div className='text-xs text-white/50 text-center'>
+                                You need to associate {toToken?.symbol} before
+                                receiving it
+                            </div>
+                        </div>
                     ) : (
                         <div className='space-y-3'>
                             <button
