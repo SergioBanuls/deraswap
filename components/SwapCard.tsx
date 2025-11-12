@@ -14,14 +14,12 @@ import { SwapSettings } from '@/types/swap'
 import { TokenSelector } from './TokenSelector'
 import { AmountInput } from './AmountInput'
 import { SwapButton } from './SwapButton'
-import { WalletConnectionModal } from './WalletConnectionModal'
 import { useReownConnect } from '@/hooks/useReownConnect'
 import { useSwapExecution } from '@/hooks/useSwapExecution'
 import { useCheckUserTokenAssociation } from '@/hooks/useCheckUserTokenAssociation'
 import { useAssociateToken } from '@/hooks/useAssociateToken'
 import { validateAmount } from '@/utils/amountValidation'
 import { Settings } from 'lucide-react'
-import { WalletType } from '@/contexts/ReownProvider'
 
 interface SwapCardProps {
     fromToken: Token | null
@@ -56,8 +54,7 @@ export const SwapCard = memo(function SwapCard({
     hasBalanceError,
     onBalanceError,
 }: SwapCardProps) {
-    const { connectWithWallet, account, isConnected, loading } =
-        useReownConnect()
+    const { connect, account, isConnected, loading } = useReownConnect()
     const {
         executeSwap,
         isExecuting,
@@ -76,16 +73,6 @@ export const SwapCard = memo(function SwapCard({
         isAssociating,
         error: associationError,
     } = useAssociateToken()
-    const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
-
-    // Handle wallet selection
-    const handleWalletSelect = useCallback(
-        async (walletType: WalletType) => {
-            setIsWalletModalOpen(false)
-            await connectWithWallet(walletType)
-        },
-        [connectWithWallet]
-    )
 
     // Handle token association
     const handleAssociateToken = useCallback(async () => {
@@ -239,7 +226,7 @@ export const SwapCard = memo(function SwapCard({
                 <div className='mt-6'>
                     {!isConnected ? (
                         <button
-                            onClick={() => setIsWalletModalOpen(true)}
+                            onClick={connect}
                             disabled={loading}
                             className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
                                 loading
@@ -324,14 +311,6 @@ export const SwapCard = memo(function SwapCard({
                     )}
                 </div>
             </div>
-
-            {/* Wallet Connection Modal */}
-            <WalletConnectionModal
-                open={isWalletModalOpen}
-                onOpenChange={setIsWalletModalOpen}
-                onSelectWallet={handleWalletSelect}
-                loading={loading}
-            />
         </div>
     )
 })
