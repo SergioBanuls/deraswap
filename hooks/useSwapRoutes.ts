@@ -242,6 +242,16 @@ async function fetchSwapRoutes({
 
     // Process routes and add computed fields
     const processedRoutes: SwapRoute[] = saucerRoutes.map((route: any) => {
+        // Debug: Log route structure to understand path format
+        console.log('Route from ETASwap:', {
+            transactionType: route.transactionType,
+            aggregatorId: route.aggregatorId,
+            path: route.path,
+            route: route.route,
+            routeDetails: JSON.stringify(route.route),
+            pools: route.pools,
+        })
+
         // Calculate total output amount
         let totalAmountTo: string
         if (Array.isArray(route.amountTo)) {
