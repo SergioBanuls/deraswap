@@ -49,11 +49,9 @@ export function useCheckUserTokenAssociation(
 
             const data = await response.json()
 
-            // Check if the tokenId exists in the balances array (balance can be 0)
-            // If it exists, it means the token is associated
-            const hasToken = data.balances?.some(
-                (b: { tokenId: string }) => b.tokenId === tokenId
-            )
+            // Check if the tokenId exists in associatedTokens array
+            // This includes all tokens associated with the account, even with 0 balance
+            const hasToken = data.associatedTokens?.includes(tokenId)
 
             console.log(
                 `🔍 Token ${tokenId} association check:`,
