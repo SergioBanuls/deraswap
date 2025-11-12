@@ -93,7 +93,7 @@ const TokenRow = memo(function TokenRow({
                 <span className='text-white/50 text-sm'>{token.name}</span>
             </div>
             <div className='flex flex-col items-end shrink-0 min-w-[80px]'>
-                {balance && account ? (
+                {balance && account &&
                     <>
                         <span className='text-white font-semibold'>
                             {balance}
@@ -102,22 +102,11 @@ const TokenRow = memo(function TokenRow({
                             <Skeleton className='h-3 w-16 mt-1' />
                         ) : currentPrice > 0 ? (
                             <span className='text-white/50 text-xs'>
-                                ${currentPrice.toFixed(4)}
+                                ${(currentPrice * Number(balance)).toFixed(4)}
                             </span>
                         ) : null}
                     </>
-                ) : (
-                    <>
-                        <span className='text-white/50 font-semibold'>-</span>
-                        {pricesLoading ? (
-                            <Skeleton className='h-3 w-16 mt-1' />
-                        ) : currentPrice > 0 ? (
-                            <span className='text-white/50 text-xs'>
-                                ${currentPrice.toFixed(4)}
-                            </span>
-                        ) : null}
-                    </>
-                )}
+                }
             </div>
         </button>
     )
@@ -131,6 +120,7 @@ export function TokenSelectCard({
     account,
 }: TokenSelectCardProps) {
     const { data: tokens, isLoading, error } = useTokens()
+    const { prices } = useTokenPricesContext()
     const [searchQuery, setSearchQuery] = useState('')
 
     // Get balance for a token - memoized
@@ -152,8 +142,8 @@ export function TokenSelectCard({
             const tokenId = token.address || 'HBAR'
             const rawBalance = balances[tokenId]
 
-            // Try both priceUsd and price fields
-            const tokenPrice = token.priceUsd || token.price
+            // Use live price from context, fallback to static price
+            const tokenPrice = prices?.[tokenId] || token.priceUsd || token.price
 
             if (!rawBalance || !tokenPrice) return 0
 
@@ -161,7 +151,7 @@ export function TokenSelectCard({
                 Number(rawBalance) / Math.pow(10, token.decimals)
             return numericBalance * tokenPrice
         },
-        [balances]
+        [balances, prices]
     )
 
     // Format USD value
