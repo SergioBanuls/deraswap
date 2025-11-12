@@ -225,7 +225,7 @@ export const SwapCard = memo(function SwapCard({
                                 }`}
                             >
                                 {hasBalanceError
-                                    ? 'Insufficient funds'
+                                    ? `Insufficient ${fromToken?.symbol}`
                                     : isExecuting
                                     ? 'Swapping...'
                                     : 'Swap'}

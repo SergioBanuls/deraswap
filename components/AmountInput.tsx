@@ -143,6 +143,11 @@ export function AmountInput({
         }
     }, [usdValue, onUsdValueChange])
 
+    // Re-validate balance whenever amount, token, or balance changes
+    useEffect(() => {
+        checkBalanceError(amount)
+    }, [amount, token, balance])
+
     return (
         <div className='bg-neutral-800 rounded-2xl px-4 py-3 group text-left'>
             <div className='flex items-center justify-between mb-2'>

@@ -99,6 +99,7 @@ export default function Home() {
         const temp = fromToken
         setFromToken(toToken)
         setToToken(temp)
+        setAmount('')
     }, [fromToken, toToken])
 
     const handleFromTokenSelect = useCallback(
