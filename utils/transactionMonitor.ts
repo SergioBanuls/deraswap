@@ -6,33 +6,34 @@
  * transaction consensus and final status.
  */
 
-const HEDERA_NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
+const HEDERA_NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet'
 
-const MIRROR_NODE_URL = HEDERA_NETWORK === 'mainnet'
-  ? 'https://mainnet.mirrornode.hedera.com'
-  : 'https://testnet.mirrornode.hedera.com';
+const MIRROR_NODE_URL =
+    HEDERA_NETWORK === 'mainnet'
+        ? 'https://mainnet.mirrornode.hedera.com'
+        : 'https://testnet.mirrornode.hedera.com'
 
 // Polling configuration
-const MAX_POLLING_ATTEMPTS = 30; // Maximum number of polling attempts
-const INITIAL_POLL_INTERVAL = 2000; // Start with 2 seconds
-const MAX_POLL_INTERVAL = 10000; // Max 10 seconds between polls
-const BACKOFF_MULTIPLIER = 1.5; // Increase interval by 50% each time
+const MAX_POLLING_ATTEMPTS = 12 // Maximum number of polling attempts (~1 minute total)
+const INITIAL_POLL_INTERVAL = 2000 // Start with 2 seconds
+const MAX_POLL_INTERVAL = 8000 // Max 8 seconds between polls
+const BACKOFF_MULTIPLIER = 1.4 // Increase interval by 40% each time
 
 export interface TransactionStatus {
-  success: boolean;
-  status: 'pending' | 'success' | 'failed' | 'unknown';
-  consensusTimestamp?: string;
-  result?: string;
-  errorMessage?: string;
-  transactionId: string;
+    success: boolean
+    status: 'pending' | 'success' | 'failed' | 'unknown'
+    consensusTimestamp?: string
+    result?: string
+    errorMessage?: string
+    transactionId: string
 }
 
 export interface MirrorNodeTransaction {
-  consensus_timestamp: string;
-  transaction_id: string;
-  result: string;
-  name: string;
-  charged_tx_fee: number;
+    consensus_timestamp: string
+    transaction_id: string
+    result: string
+    name: string
+    charged_tx_fee: number
 }
 
 /**
@@ -48,16 +49,16 @@ export interface MirrorNodeTransaction {
  * @returns Normalized transaction ID with - separators
  */
 function normalizeTransactionId(txId: string): string {
-  // Convert @ to - for Mirror Node API
-  // "0.0.1234@1234567890.123456789" -> "0.0.1234-1234567890-123456789"
-  if (txId.includes('@')) {
-    const [accountId, timestamp] = txId.split('@');
-    const [seconds, nanos] = timestamp.split('.');
-    return `${accountId}-${seconds}-${nanos}`;
-  }
+    // Convert @ to - for Mirror Node API
+    // "0.0.1234@1234567890.123456789" -> "0.0.1234-1234567890-123456789"
+    if (txId.includes('@')) {
+        const [accountId, timestamp] = txId.split('@')
+        const [seconds, nanos] = timestamp.split('.')
+        return `${accountId}-${seconds}-${nanos}`
+    }
 
-  // If already has -, return as is
-  return txId;
+    // If already has -, return as is
+    return txId
 }
 
 /**
@@ -67,36 +68,36 @@ function normalizeTransactionId(txId: string): string {
  * @returns Transaction details from Mirror Node
  */
 async function queryMirrorNode(
-  transactionId: string
+    transactionId: string
 ): Promise<MirrorNodeTransaction | null> {
-  try {
-    const normalizedId = normalizeTransactionId(transactionId);
-    const url = `${MIRROR_NODE_URL}/api/v1/transactions/${normalizedId}`;
+    try {
+        const normalizedId = normalizeTransactionId(transactionId)
+        const url = `${MIRROR_NODE_URL}/api/v1/transactions/${normalizedId}`
 
-    console.log('Querying Mirror Node:', url);
+        console.log('Querying Mirror Node:', url)
 
-    const response = await fetch(url);
+        const response = await fetch(url)
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        // Transaction not yet in Mirror Node
-        return null;
-      }
-      throw new Error(`Mirror Node API error: ${response.status}`);
+        if (!response.ok) {
+            if (response.status === 404) {
+                // Transaction not yet in Mirror Node
+                return null
+            }
+            throw new Error(`Mirror Node API error: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        // Mirror Node returns transactions array
+        if (data.transactions && data.transactions.length > 0) {
+            return data.transactions[0]
+        }
+
+        return null
+    } catch (error) {
+        console.error('Error querying Mirror Node:', error)
+        throw error
     }
-
-    const data = await response.json();
-
-    // Mirror Node returns transactions array
-    if (data.transactions && data.transactions.length > 0) {
-      return data.transactions[0];
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error querying Mirror Node:', error);
-    throw error;
-  }
 }
 
 /**
@@ -109,7 +110,7 @@ async function queryMirrorNode(
  * @returns Whether transaction was successful
  */
 function isSuccessResult(result: string): boolean {
-  return result === 'SUCCESS';
+    return result === 'SUCCESS'
 }
 
 /**
@@ -119,14 +120,18 @@ function isSuccessResult(result: string): boolean {
  * @returns Promise that resolves after waiting
  */
 async function waitWithBackoff(attempt: number): Promise<void> {
-  const delay = Math.min(
-    INITIAL_POLL_INTERVAL * Math.pow(BACKOFF_MULTIPLIER, attempt),
-    MAX_POLL_INTERVAL
-  );
+    const delay = Math.min(
+        INITIAL_POLL_INTERVAL * Math.pow(BACKOFF_MULTIPLIER, attempt),
+        MAX_POLL_INTERVAL
+    )
 
-  console.log(`Waiting ${delay}ms before next poll (attempt ${attempt + 1}/${MAX_POLLING_ATTEMPTS})`);
+    console.log(
+        `Waiting ${delay}ms before next poll (attempt ${
+            attempt + 1
+        }/${MAX_POLLING_ATTEMPTS})`
+    )
 
-  return new Promise((resolve) => setTimeout(resolve, delay));
+    return new Promise((resolve) => setTimeout(resolve, delay))
 }
 
 /**
@@ -141,72 +146,86 @@ async function waitWithBackoff(attempt: number): Promise<void> {
  * @returns Final transaction status
  */
 export async function monitorTransaction(
-  transactionId: string,
-  onProgress?: (attempt: number, maxAttempts: number) => void
+    transactionId: string,
+    onProgress?: (attempt: number, maxAttempts: number) => void
 ): Promise<TransactionStatus> {
-  console.log('🔍 Starting transaction monitoring:', transactionId);
+    console.log('🔍 Starting transaction monitoring:', transactionId)
 
-  for (let attempt = 0; attempt < MAX_POLLING_ATTEMPTS; attempt++) {
-    try {
-      // Notify progress
-      if (onProgress) {
-        onProgress(attempt + 1, MAX_POLLING_ATTEMPTS);
-      }
+    // Wait before first query to give Mirror Node time to process
+    // Mirror Node typically takes 3-5 seconds to index a new transaction
+    const INITIAL_DELAY = 4000 // 4 seconds
+    console.log(
+        `⏳ Waiting ${INITIAL_DELAY}ms for Mirror Node to index transaction...`
+    )
+    await new Promise((resolve) => setTimeout(resolve, INITIAL_DELAY))
 
-      // Query Mirror Node
-      const tx = await queryMirrorNode(transactionId);
+    for (let attempt = 0; attempt < MAX_POLLING_ATTEMPTS; attempt++) {
+        try {
+            // Notify progress
+            if (onProgress) {
+                onProgress(attempt + 1, MAX_POLLING_ATTEMPTS)
+            }
 
-      if (tx) {
-        // Transaction found in Mirror Node
-        const success = isSuccessResult(tx.result);
+            // Query Mirror Node
+            const tx = await queryMirrorNode(transactionId)
 
-        console.log(`✅ Transaction confirmed:`, {
-          status: tx.result,
-          success,
-          consensusTimestamp: tx.consensus_timestamp,
-        });
+            if (tx) {
+                // Transaction found in Mirror Node
+                const success = isSuccessResult(tx.result)
 
-        return {
-          success,
-          status: success ? 'success' : 'failed',
-          consensusTimestamp: tx.consensus_timestamp,
-          result: tx.result,
-          errorMessage: success ? undefined : `Transaction failed with status: ${tx.result}`,
-          transactionId,
-        };
-      }
+                console.log(`✅ Transaction confirmed:`, {
+                    status: tx.result,
+                    success,
+                    consensusTimestamp: tx.consensus_timestamp,
+                })
 
-      // Transaction not yet in Mirror Node, wait and retry
-      if (attempt < MAX_POLLING_ATTEMPTS - 1) {
-        await waitWithBackoff(attempt);
-      }
-    } catch (error) {
-      console.error(`Error on attempt ${attempt + 1}:`, error);
+                return {
+                    success,
+                    status: success ? 'success' : 'failed',
+                    consensusTimestamp: tx.consensus_timestamp,
+                    result: tx.result,
+                    errorMessage: success
+                        ? undefined
+                        : `Transaction failed with status: ${tx.result}`,
+                    transactionId,
+                }
+            }
 
-      // If we're not on the last attempt, wait and retry
-      if (attempt < MAX_POLLING_ATTEMPTS - 1) {
-        await waitWithBackoff(attempt);
-      } else {
-        // Last attempt failed
-        return {
-          success: false,
-          status: 'unknown',
-          errorMessage: error instanceof Error ? error.message : 'Unknown error during monitoring',
-          transactionId,
-        };
-      }
+            // Transaction not yet in Mirror Node, wait and retry
+            if (attempt < MAX_POLLING_ATTEMPTS - 1) {
+                await waitWithBackoff(attempt)
+            }
+        } catch (error) {
+            console.error(`Error on attempt ${attempt + 1}:`, error)
+
+            // If we're not on the last attempt, wait and retry
+            if (attempt < MAX_POLLING_ATTEMPTS - 1) {
+                await waitWithBackoff(attempt)
+            } else {
+                // Last attempt failed
+                return {
+                    success: false,
+                    status: 'unknown',
+                    errorMessage:
+                        error instanceof Error
+                            ? error.message
+                            : 'Unknown error during monitoring',
+                    transactionId,
+                }
+            }
+        }
     }
-  }
 
-  // Max attempts reached without finding transaction
-  console.warn('⚠️ Max polling attempts reached without confirmation');
+    // Max attempts reached without finding transaction
+    console.warn('⚠️ Max polling attempts reached without confirmation')
 
-  return {
-    success: false,
-    status: 'unknown',
-    errorMessage: 'Transaction monitoring timeout - transaction may still be processing',
-    transactionId,
-  };
+    return {
+        success: false,
+        status: 'unknown',
+        errorMessage:
+            'Transaction monitoring timeout - transaction may still be processing',
+        transactionId,
+    }
 }
 
 /**
@@ -218,29 +237,31 @@ export async function monitorTransaction(
  * @returns Transaction status or null if not found
  */
 export async function getTransactionStatus(
-  transactionId: string
+    transactionId: string
 ): Promise<TransactionStatus | null> {
-  try {
-    const tx = await queryMirrorNode(transactionId);
+    try {
+        const tx = await queryMirrorNode(transactionId)
 
-    if (!tx) {
-      return null;
+        if (!tx) {
+            return null
+        }
+
+        const success = isSuccessResult(tx.result)
+
+        return {
+            success,
+            status: success ? 'success' : 'failed',
+            consensusTimestamp: tx.consensus_timestamp,
+            result: tx.result,
+            errorMessage: success
+                ? undefined
+                : `Transaction failed with status: ${tx.result}`,
+            transactionId,
+        }
+    } catch (error) {
+        console.error('Error getting transaction status:', error)
+        return null
     }
-
-    const success = isSuccessResult(tx.result);
-
-    return {
-      success,
-      status: success ? 'success' : 'failed',
-      consensusTimestamp: tx.consensus_timestamp,
-      result: tx.result,
-      errorMessage: success ? undefined : `Transaction failed with status: ${tx.result}`,
-      transactionId,
-    };
-  } catch (error) {
-    console.error('Error getting transaction status:', error);
-    return null;
-  }
 }
 
 /**
@@ -251,12 +272,13 @@ export async function getTransactionStatus(
  * @returns HashScan URL for transaction
  */
 export function getTransactionExplorerUrl(
-  transactionId: string,
-  network: 'mainnet' | 'testnet' = 'mainnet'
+    transactionId: string,
+    network: 'mainnet' | 'testnet' = 'mainnet'
 ): string {
-  const baseUrl = network === 'mainnet'
-    ? 'https://hashscan.io/mainnet'
-    : 'https://hashscan.io/testnet';
+    const baseUrl =
+        network === 'mainnet'
+            ? 'https://hashscan.io/mainnet'
+            : 'https://hashscan.io/testnet'
 
-  return `${baseUrl}/transaction/${transactionId}`;
+    return `${baseUrl}/transaction/${transactionId}`
 }

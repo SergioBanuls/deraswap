@@ -14,6 +14,7 @@ import { SwapSettings } from '@/types/swap'
 import { TokenSelector } from './TokenSelector'
 import { AmountInput } from './AmountInput'
 import { SwapButton } from './SwapButton'
+import { SwapProgressDialog } from './SwapProgressDialog'
 import { useReownConnect } from '@/hooks/useReownConnect'
 import { useSwapExecution } from '@/hooks/useSwapExecution'
 import { useCheckUserTokenAssociation } from '@/hooks/useCheckUserTokenAssociation'
@@ -62,6 +63,9 @@ export const SwapCard = memo(function SwapCard({
         currentStep,
         explorerUrl,
         monitoringProgress,
+        error: swapError,
+        txHash,
+        reset: resetSwap,
     } = useSwapExecution()
     const {
         isAssociated,
@@ -73,6 +77,9 @@ export const SwapCard = memo(function SwapCard({
         isAssociating,
         error: associationError,
     } = useAssociateToken()
+
+    // State for progress dialog
+    const [showProgressDialog, setShowProgressDialog] = useState(false)
 
     // Handle token association
     const handleAssociateToken = useCallback(async () => {
@@ -114,6 +121,9 @@ export const SwapCard = memo(function SwapCard({
 
         console.log('✅ Starting swap execution...')
 
+        // Show progress dialog
+        setShowProgressDialog(true)
+
         // Use effective slippage if provided, otherwise use settings value
         const slippage =
             effectiveSlippage !== undefined
@@ -139,6 +149,12 @@ export const SwapCard = memo(function SwapCard({
         effectiveSlippage,
         executeSwap,
     ])
+
+    // Handle dialog close
+    const handleCloseProgressDialog = useCallback(() => {
+        setShowProgressDialog(false)
+        resetSwap()
+    }, [resetSwap])
 
     // Determine if swap button should be enabled
     const canSwap =
@@ -169,148 +185,167 @@ export const SwapCard = memo(function SwapCard({
     })
 
     return (
-        <div className='w-full'>
-            <div className='bg-neutral-900 rounded-3xl p-6 min-h-[420px] flex flex-col'>
-                {/* Header */}
-                <div className='flex items-center justify-between mb-4'>
-                    <h1 className='text-2xl font-bold text-white'>Exchange</h1>
-                    <button
-                        onClick={onSettingsClick}
-                        className='p-2 rounded-lg hover:bg-neutral-700 text-white/70 hover:text-white transition-all'
-                        aria-label='Settings'
-                    >
-                        <Settings className='w-5 h-5' />
-                    </button>
-                </div>
+        <>
+            <SwapProgressDialog
+                isOpen={showProgressDialog}
+                currentStep={currentStep}
+                stepMessage={stepMessage}
+                error={swapError}
+                txHash={txHash}
+                explorerUrl={explorerUrl}
+                monitoringProgress={monitoringProgress}
+                onClose={handleCloseProgressDialog}
+                receivedAmount={selectedRoute?.outputAmountFormatted}
+                receivedToken={toToken}
+            />
 
-                {/* Token Selectors - Side by Side with overlapping Swap Button */}
-                <div className='relative flex items-center gap-0'>
-                    {/* From Token */}
-                    <div className='flex-1 pr-4'>
-                        <TokenSelector
-                            label='From'
-                            selectedToken={fromToken}
-                            onClick={onFromTokenClick}
-                        />
-                    </div>
-
-                    {/* Swap Button - Absolutely positioned */}
-                    <div className='absolute left-1/2 -translate-x-1/2 z-10'>
-                        <SwapButton onSwap={onSwapTokens} />
-                    </div>
-
-                    {/* To Token */}
-                    <div className='flex-1 pl-4'>
-                        <TokenSelector
-                            label='To'
-                            selectedToken={toToken}
-                            onClick={onToTokenClick}
-                        />
-                    </div>
-                </div>
-
-                {/* Amount Input */}
-                <div className='mt-6'>
-                    <AmountInput
-                        amount={amount}
-                        account={account}
-                        onAmountChange={onAmountChange}
-                        token={fromToken}
-                        disabled={!fromToken}
-                        balance={fromTokenBalance}
-                        onBalanceError={onBalanceError}
-                    />
-                </div>
-
-                {/* Connect Wallet / Associate Token / Swap Button */}
-                <div className='mt-6'>
-                    {!isConnected ? (
+            <div className='w-full'>
+                <div className='bg-neutral-900 rounded-3xl p-6 min-h-[420px] flex flex-col'>
+                    {/* Header */}
+                    <div className='flex items-center justify-between mb-4'>
+                        <h1 className='text-2xl font-bold text-white'>
+                            Exchange
+                        </h1>
                         <button
-                            onClick={connect}
-                            disabled={loading}
-                            className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
-                                loading
-                                    ? 'bg-blue-500/50 text-white cursor-wait'
-                                    : 'bg-blue-500 hover:bg-blue-600 text-white'
-                            }`}
+                            onClick={onSettingsClick}
+                            className='p-2 rounded-lg hover:bg-neutral-700 text-white/70 hover:text-white transition-all'
+                            aria-label='Settings'
                         >
-                            {loading ? 'Connecting...' : 'Connect wallet'}
+                            <Settings className='w-5 h-5' />
                         </button>
-                    ) : needsAssociation ? (
-                        <div className='space-y-3'>
-                            <button
-                                onClick={handleAssociateToken}
-                                disabled={isAssociating}
-                                className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
-                                    isAssociating
-                                        ? 'bg-purple-500/50 text-white cursor-wait'
-                                        : 'bg-purple-500 hover:bg-purple-600 text-white'
-                                }`}
-                            >
-                                {isAssociating
-                                    ? 'Associating...'
-                                    : `Associate ${toToken?.symbol || 'Token'}`}
-                            </button>
-                            {associationError && (
-                                <div className='text-xs text-red-400 text-center'>
-                                    {associationError}
-                                </div>
-                            )}
-                            <div className='text-xs text-white/50 text-center'>
-                                You need to associate {toToken?.symbol} before
-                                receiving it
-                            </div>
+                    </div>
+
+                    {/* Token Selectors - Side by Side with overlapping Swap Button */}
+                    <div className='relative flex items-center gap-0'>
+                        {/* From Token */}
+                        <div className='flex-1 pr-4'>
+                            <TokenSelector
+                                label='From'
+                                selectedToken={fromToken}
+                                onClick={onFromTokenClick}
+                            />
                         </div>
-                    ) : (
-                        <div className='space-y-3'>
+
+                        {/* Swap Button - Absolutely positioned */}
+                        <div className='absolute left-1/2 -translate-x-1/2 z-10'>
+                            <SwapButton onSwap={onSwapTokens} />
+                        </div>
+
+                        {/* To Token */}
+                        <div className='flex-1 pl-4'>
+                            <TokenSelector
+                                label='To'
+                                selectedToken={toToken}
+                                onClick={onToTokenClick}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Amount Input */}
+                    <div className='mt-6'>
+                        <AmountInput
+                            amount={amount}
+                            account={account}
+                            onAmountChange={onAmountChange}
+                            token={fromToken}
+                            disabled={!fromToken}
+                            balance={fromTokenBalance}
+                            onBalanceError={onBalanceError}
+                        />
+                    </div>
+
+                    {/* Connect Wallet / Associate Token / Swap Button */}
+                    <div className='mt-6'>
+                        {!isConnected ? (
                             <button
-                                onClick={handleSwap}
-                                disabled={!canSwap}
+                                onClick={connect}
+                                disabled={loading}
                                 className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
-                                    !canSwap
-                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                        : isExecuting
-                                        ? 'bg-yellow-500 text-white cursor-wait'
+                                    loading
+                                        ? 'bg-blue-500/50 text-white cursor-wait'
                                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                                 }`}
                             >
-                                {hasBalanceError
-                                    ? `Insufficient ${fromToken?.symbol}`
-                                    : isExecuting
-                                    ? 'Swapping...'
-                                    : 'Swap'}
+                                {loading ? 'Connecting...' : 'Connect wallet'}
                             </button>
-                            {isExecuting && currentStep && (
-                                <div className='text-xs text-white/50 text-center space-y-1'>
-                                    <div className='animate-pulse'>
-                                        {stepMessage}
+                        ) : needsAssociation ? (
+                            <div className='space-y-3'>
+                                <button
+                                    onClick={handleAssociateToken}
+                                    disabled={isAssociating}
+                                    className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                                        isAssociating
+                                            ? 'bg-purple-500/50 text-white cursor-wait'
+                                            : 'bg-purple-500 hover:bg-purple-600 text-white'
+                                    }`}
+                                >
+                                    {isAssociating
+                                        ? 'Associating...'
+                                        : `Associate ${
+                                              toToken?.symbol || 'Token'
+                                          }`}
+                                </button>
+                                {associationError && (
+                                    <div className='text-xs text-red-400 text-center'>
+                                        {associationError}
                                     </div>
-                                    {currentStep === 'monitoring' &&
-                                        monitoringProgress && (
-                                            <div className='text-white/40'>
-                                                Checking consensus... (
-                                                {monitoringProgress.current}/
-                                                {monitoringProgress.max})
-                                            </div>
-                                        )}
-                                </div>
-                            )}
-                            {explorerUrl &&
-                                (currentStep === 'monitoring' ||
-                                    currentStep === 'success') && (
-                                    <a
-                                        href={explorerUrl}
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                        className='text-xs text-blue-400 hover:text-blue-300 text-center block underline'
-                                    >
-                                        View on HashScan
-                                    </a>
                                 )}
-                        </div>
-                    )}
+                                <div className='text-xs text-white/50 text-center'>
+                                    You need to associate {toToken?.symbol}{' '}
+                                    before receiving it
+                                </div>
+                            </div>
+                        ) : (
+                            <div className='space-y-3'>
+                                <button
+                                    onClick={handleSwap}
+                                    disabled={!canSwap}
+                                    className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                                        !canSwap
+                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                            : isExecuting
+                                            ? 'bg-yellow-500 text-white cursor-wait'
+                                            : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    }`}
+                                >
+                                    {hasBalanceError
+                                        ? `Insufficient ${fromToken?.symbol}`
+                                        : isExecuting
+                                        ? 'Swapping...'
+                                        : 'Swap'}
+                                </button>
+                                {isExecuting && currentStep && (
+                                    <div className='text-xs text-white/50 text-center space-y-1'>
+                                        <div className='animate-pulse'>
+                                            {stepMessage}
+                                        </div>
+                                        {currentStep === 'monitoring' &&
+                                            monitoringProgress && (
+                                                <div className='text-white/40'>
+                                                    Checking consensus... (
+                                                    {monitoringProgress.current}
+                                                    /{monitoringProgress.max})
+                                                </div>
+                                            )}
+                                    </div>
+                                )}
+                                {explorerUrl &&
+                                    (currentStep === 'monitoring' ||
+                                        currentStep === 'success') && (
+                                        <a
+                                            href={explorerUrl}
+                                            target='_blank'
+                                            rel='noopener noreferrer'
+                                            className='text-xs text-blue-400 hover:text-blue-300 text-center block underline'
+                                        >
+                                            View on HashScan
+                                        </a>
+                                    )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     )
 })
