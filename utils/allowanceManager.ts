@@ -8,21 +8,26 @@
  * ETASwap and custom router contracts.
  */
 
-import { AccountId, TokenId, AccountAllowanceApproveTransaction, TransactionId } from '@hashgraph/sdk';
-import Long from 'long';
-import { getActiveRouter } from '@/config/contracts';
+import {
+    AccountId,
+    TokenId,
+    AccountAllowanceApproveTransaction,
+    TransactionId,
+} from '@hashgraph/sdk'
+import Long from 'long'
+import { getActiveRouter } from '@/config/contracts'
 
 export interface AllowanceStatus {
-  hasAllowance: boolean;
-  currentAllowance: string;
-  required: string;
+    hasAllowance: boolean
+    currentAllowance: string
+    required: string
 }
 
 export interface ApprovalParams {
-  tokenId: string; // Hedera token ID (0.0.X)
-  amount: string; // Amount in smallest units
-  ownerAccountId: string; // User's account ID
-  spenderAddress: string; // Router contract address
+    tokenId: string // Hedera token ID (0.0.X)
+    amount: string // Amount in smallest units
+    ownerAccountId: string // User's account ID
+    spenderAddress: string // Router contract address
 }
 
 /**
@@ -32,52 +37,52 @@ export interface ApprovalParams {
  * @returns Allowance status
  */
 export async function checkAllowance(
-  params: ApprovalParams
+    params: ApprovalParams
 ): Promise<AllowanceStatus> {
-  const { tokenId, amount, ownerAccountId, spenderAddress } = params;
+    const { tokenId, amount, ownerAccountId, spenderAddress } = params
 
-  try {
-    // Query Mirror Node for token allowances
-    const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
-    const mirrorNodeUrl =
-      network === 'mainnet'
-        ? 'https://mainnet.mirrornode.hedera.com'
-        : 'https://testnet.mirrornode.hedera.com';
+    try {
+        // Query Mirror Node for token allowances
+        const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet'
+        const useApiEndpoint = network === 'mainnet'
 
-    const response = await fetch(
-      `${mirrorNodeUrl}/api/v1/accounts/${ownerAccountId}/allowances/tokens`
-    );
+        // Use API endpoint for mainnet (secure), direct for testnet
+        const url = useApiEndpoint
+            ? `/api/mirror/allowances/${ownerAccountId}`
+            : `https://testnet.mirrornode.hedera.com/api/v1/accounts/${ownerAccountId}/allowances/tokens`
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch allowances');
+        const response = await fetch(url)
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch allowances')
+        }
+
+        const data = await response.json()
+
+        // Find allowance for this specific token and spender
+        const allowance = data.allowances?.find(
+            (a: any) =>
+                a.token_id === tokenId &&
+                a.spender.toLowerCase() === spenderAddress.toLowerCase()
+        )
+
+        const currentAllowance = allowance?.amount_granted || '0'
+        const hasAllowance = BigInt(currentAllowance) >= BigInt(amount)
+
+        return {
+            hasAllowance,
+            currentAllowance,
+            required: amount,
+        }
+    } catch (error) {
+        console.error('Error checking allowance:', error)
+        // Assume no allowance on error (safer)
+        return {
+            hasAllowance: false,
+            currentAllowance: '0',
+            required: amount,
+        }
     }
-
-    const data = await response.json();
-
-    // Find allowance for this specific token and spender
-    const allowance = data.allowances?.find(
-      (a: any) =>
-        a.token_id === tokenId &&
-        a.spender.toLowerCase() === spenderAddress.toLowerCase()
-    );
-
-    const currentAllowance = allowance?.amount_granted || '0';
-    const hasAllowance = BigInt(currentAllowance) >= BigInt(amount);
-
-    return {
-      hasAllowance,
-      currentAllowance,
-      required: amount,
-    };
-  } catch (error) {
-    console.error('Error checking allowance:', error);
-    // Assume no allowance on error (safer)
-    return {
-      hasAllowance: false,
-      currentAllowance: '0',
-      required: amount,
-    };
-  }
 }
 
 /**
@@ -90,40 +95,41 @@ export async function checkAllowance(
  * @returns Serialized transaction bytes ready for wallet signing
  */
 export function buildApprovalTransaction(params: ApprovalParams): Uint8Array {
-  const { tokenId, amount, ownerAccountId } = params;
-  const router = getActiveRouter();
+    const { tokenId, amount, ownerAccountId } = params
+    const router = getActiveRouter()
 
-  console.log('🔐 Building approval transaction:', {
-    tokenId,
-    amount,
-    ownerAccountId,
-    routerAddress: router.address,
-  });
+    console.log('🔐 Building approval transaction:', {
+        tokenId,
+        amount,
+        ownerAccountId,
+        routerAddress: router.address,
+    })
 
-  // Get network to determine node account
-  const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
-  const nodeAccountId = network === 'mainnet'
-    ? AccountId.fromString('0.0.3')  // Mainnet node
-    : AccountId.fromString('0.0.3'); // Testnet node
+    // Get network to determine node account
+    const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet'
+    const nodeAccountId =
+        network === 'mainnet'
+            ? AccountId.fromString('0.0.3') // Mainnet node
+            : AccountId.fromString('0.0.3') // Testnet node
 
-  // Create transaction ID
-  const operatorId = AccountId.fromString(ownerAccountId);
-  const transactionId = TransactionId.generate(operatorId);
+    // Create transaction ID
+    const operatorId = AccountId.fromString(ownerAccountId)
+    const transactionId = TransactionId.generate(operatorId)
 
-  // Create approval transaction
-  const transaction = new AccountAllowanceApproveTransaction()
-    .setTransactionId(transactionId)
-    .approveTokenAllowance(
-      TokenId.fromString(tokenId),
-      AccountId.fromString(ownerAccountId),
-      AccountId.fromEvmAddress(0, 0, router.address),
-      Long.fromString(amount)
-    )
-    .setNodeAccountIds([nodeAccountId]);
+    // Create approval transaction
+    const transaction = new AccountAllowanceApproveTransaction()
+        .setTransactionId(transactionId)
+        .approveTokenAllowance(
+            TokenId.fromString(tokenId),
+            AccountId.fromString(ownerAccountId),
+            AccountId.fromEvmAddress(0, 0, router.address),
+            Long.fromString(amount)
+        )
+        .setNodeAccountIds([nodeAccountId])
 
-  // Freeze and convert to bytes
-  const frozenTx = transaction.freeze();
-  return frozenTx.toBytes();
+    // Freeze and convert to bytes
+    const frozenTx = transaction.freeze()
+    return frozenTx.toBytes()
 }
 
 /**
@@ -138,28 +144,28 @@ export function buildApprovalTransaction(params: ApprovalParams): Uint8Array {
  * @returns Object with approval status and transaction if needed
  */
 export async function requestApproval(params: ApprovalParams): Promise<{
-  needed: boolean;
-  transaction?: Uint8Array;
-  status: AllowanceStatus;
+    needed: boolean
+    transaction?: Uint8Array
+    status: AllowanceStatus
 }> {
-  // Check current allowance
-  const status = await checkAllowance(params);
+    // Check current allowance
+    const status = await checkAllowance(params)
 
-  if (status.hasAllowance) {
+    if (status.hasAllowance) {
+        return {
+            needed: false,
+            status,
+        }
+    }
+
+    // Build approval transaction
+    const transaction = buildApprovalTransaction(params)
+
     return {
-      needed: false,
-      status,
-    };
-  }
-
-  // Build approval transaction
-  const transaction = buildApprovalTransaction(params);
-
-  return {
-    needed: true,
-    transaction,
-    status,
-  };
+        needed: true,
+        transaction,
+        status,
+    }
 }
 
 /**
@@ -172,10 +178,11 @@ export async function requestApproval(params: ApprovalParams): Promise<{
  * @returns Amount with buffer
  */
 export function calculateAllowanceWithBuffer(
-  amount: string,
-  bufferPercentage: number = 1
+    amount: string,
+    bufferPercentage: number = 1
 ): string {
-  const amountBigInt = BigInt(amount);
-  const buffer = (amountBigInt * BigInt(bufferPercentage * 100)) / BigInt(10000);
-  return (amountBigInt + buffer).toString();
+    const amountBigInt = BigInt(amount)
+    const buffer =
+        (amountBigInt * BigInt(bufferPercentage * 100)) / BigInt(10000)
+    return (amountBigInt + buffer).toString()
 }

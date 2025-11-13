@@ -7,7 +7,9 @@
 
 import { NextResponse } from 'next/server'
 
-const MIRROR_NODE_URL = 'https://mainnet.hedera.validationcloud.io/v1'
+const VALIDATION_CLOUD_BASE_URL =
+    process.env.VALIDATION_CLOUD_BASE_URL ||
+    'https://mainnet.hedera.validationcloud.io/v1'
 const VALIDATION_CLOUD_API_KEY = process.env.VALIDATION_CLOUD_API_KEY
 
 interface TokenBalanceItem {
@@ -37,8 +39,12 @@ export async function GET(
     }
 
     try {
-        const url = `${MIRROR_NODE_URL}/${VALIDATION_CLOUD_API_KEY}/api/v1/accounts/${accountId}?limit=100&transactions=false`
-        console.log('URL:', url)
+        const baseUrlWithKey = VALIDATION_CLOUD_API_KEY
+            ? `${VALIDATION_CLOUD_BASE_URL}/${VALIDATION_CLOUD_API_KEY}`
+            : VALIDATION_CLOUD_BASE_URL
+
+        const url = `${baseUrlWithKey}/api/v1/accounts/${accountId}?limit=100&transactions=false`
+        console.log('Fetching balances for:', accountId)
         const response = await fetch(url)
 
         if (!response.ok) {

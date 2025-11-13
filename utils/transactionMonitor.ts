@@ -8,10 +8,8 @@
 
 const HEDERA_NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet'
 
-const MIRROR_NODE_URL =
-    HEDERA_NETWORK === 'mainnet'
-        ? 'https://mainnet.mirrornode.hedera.com'
-        : 'https://testnet.mirrornode.hedera.com'
+// Use API endpoint for secure mirror node access
+const USE_API_ENDPOINT = HEDERA_NETWORK === 'mainnet'
 
 // Polling configuration
 const MAX_POLLING_ATTEMPTS = 12 // Maximum number of polling attempts (~1 minute total)
@@ -72,7 +70,11 @@ async function queryMirrorNode(
 ): Promise<MirrorNodeTransaction | null> {
     try {
         const normalizedId = normalizeTransactionId(transactionId)
-        const url = `${MIRROR_NODE_URL}/api/v1/transactions/${normalizedId}`
+
+        // Use API endpoint for mainnet (secure), direct for testnet
+        const url = USE_API_ENDPOINT
+            ? `/api/mirror/transaction/${normalizedId}`
+            : `https://testnet.mirrornode.hedera.com/api/v1/transactions/${normalizedId}`
 
         console.log('Querying Mirror Node:', url)
 

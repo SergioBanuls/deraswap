@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Header } from '@/components/Header'
 import { SwapCard } from '@/components/SwapCard'
 import { SwapRoutes } from '@/components/SwapRoutes'
+import { SwapHistory } from '@/components/SwapHistory'
 import { SettingsCard } from '@/components/SettingsCard'
 import { TokenSelectCard } from '@/components/TokenSelectCard'
 import { Token } from '@/types/token'
@@ -20,9 +21,9 @@ export default function Home() {
     const [amount, setAmount] = useState('')
     const [selectedRoute, setSelectedRoute] = useState<SwapRoute | null>(null)
     const [hasBalanceError, setHasBalanceError] = useState(false)
-    const [view, setView] = useState<'swap' | 'settings' | 'selectToken'>(
-        'swap'
-    )
+    const [view, setView] = useState<
+        'swap' | 'settings' | 'selectToken' | 'history'
+    >('swap')
     const [tokenSelectType, setTokenSelectType] = useState<'from' | 'to'>(
         'from'
     )
@@ -148,20 +149,25 @@ export default function Home() {
         setView('selectToken')
     }, [])
 
+    const handleHistoryClick = useCallback(() => {
+        // Toggle between history and swap view
+        setView((prev) => (prev === 'history' ? 'swap' : 'history'))
+    }, [])
+
     return (
         <div className='flex items-center justify-center mt-36 w-full'>
             <div className='max-w-5xl w-full px-4'>
                 {/* Grid layout - always present, mobile stack, desktop side-by-side */}
                 <div
                     className={`grid grid-cols-1 gap-6 items-center lg:items-start transition-all duration-900 ease-in-out ${
-                        showRoutes && view === 'swap'
+                        (showRoutes && view === 'swap') || view === 'history'
                             ? 'lg:grid-cols-2 lg:justify-center'
                             : 'lg:grid-cols-1 lg:justify-items-center'
                     }`}
                 >
                     {/* Left Column - Swap Card, Settings Card, or Token Select Card */}
                     <div className='w-full max-w-md mx-auto transition-all duration-900 ease-in-out relative z-10'>
-                        {view === 'swap' ? (
+                        {view === 'swap' || view === 'history' ? (
                             <SwapCard
                                 fromToken={fromToken}
                                 toToken={toToken}
@@ -170,6 +176,7 @@ export default function Home() {
                                 settings={settings}
                                 effectiveSlippage={effectiveSlippage}
                                 onSettingsClick={() => setView('settings')}
+                                onHistoryClick={handleHistoryClick}
                                 onFromTokenClick={handleFromTokenClick}
                                 onToTokenClick={handleToTokenClick}
                                 onAmountChange={setAmount}
@@ -177,6 +184,7 @@ export default function Home() {
                                 fromTokenBalance={fromTokenBalance}
                                 hasBalanceError={hasBalanceError}
                                 onBalanceError={setHasBalanceError}
+                                isHistoryOpen={view === 'history'}
                             />
                         ) : view === 'settings' ? (
                             <SettingsCard
@@ -204,10 +212,11 @@ export default function Home() {
                         )}
                     </div>
 
-                    {/* Right Column - Swap Routes */}
+                    {/* Right Column - Swap Routes or History */}
                     <div
                         className={`w-full max-w-md mx-auto transition-all duration-700 ease-in-out relative z-0 ${
-                            showRoutes && view === 'swap'
+                            (showRoutes && view === 'swap') ||
+                            view === 'history'
                                 ? 'opacity-100 scale-100'
                                 : 'opacity-0 lg:-translate-x-[50%] scale-95 pointer-events-none'
                         }`}
@@ -220,6 +229,12 @@ export default function Home() {
                                 slippageTolerance={effectiveSlippage}
                                 autoSlippage={settings.autoSlippage}
                                 onRouteSelect={setSelectedRoute}
+                            />
+                        )}
+                        {view === 'history' && (
+                            <SwapHistory
+                                walletAddress={account}
+                                onClose={() => setView('swap')}
                             />
                         )}
                     </div>

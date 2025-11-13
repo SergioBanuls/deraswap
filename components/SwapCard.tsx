@@ -20,7 +20,7 @@ import { useSwapExecution } from '@/hooks/useSwapExecution'
 import { useCheckUserTokenAssociation } from '@/hooks/useCheckUserTokenAssociation'
 import { useAssociateToken } from '@/hooks/useAssociateToken'
 import { validateAmount } from '@/utils/amountValidation'
-import { Settings } from 'lucide-react'
+import { Settings, History } from 'lucide-react'
 
 interface SwapCardProps {
     fromToken: Token | null
@@ -30,6 +30,7 @@ interface SwapCardProps {
     settings: SwapSettings
     effectiveSlippage?: number // The actual slippage to use (auto-calculated or manual)
     onSettingsClick: () => void
+    onHistoryClick: () => void
     onFromTokenClick: () => void
     onToTokenClick: () => void
     onAmountChange: (amount: string) => void
@@ -37,6 +38,7 @@ interface SwapCardProps {
     fromTokenBalance?: string // Balance of the from token in raw units
     hasBalanceError?: boolean // Whether there's insufficient balance
     onBalanceError?: (hasError: boolean) => void // Callback for balance error state
+    isHistoryOpen?: boolean // Whether the history view is open
 }
 
 export const SwapCard = memo(function SwapCard({
@@ -47,6 +49,8 @@ export const SwapCard = memo(function SwapCard({
     settings,
     effectiveSlippage,
     onSettingsClick,
+    onHistoryClick,
+    isHistoryOpen = false,
     onFromTokenClick,
     onToTokenClick,
     onAmountChange,
@@ -165,7 +169,8 @@ export const SwapCard = memo(function SwapCard({
         selectedRoute &&
         !isExecuting &&
         !hasBalanceError && // Disable if insufficient balance
-        isAssociated // Only enable if token is associated
+        isAssociated && // Only enable if token is associated
+        !isHistoryOpen // Disable if history is open
 
     // Determine if we need to show associate button
     const needsAssociation =
@@ -206,13 +211,23 @@ export const SwapCard = memo(function SwapCard({
                         <h1 className='text-2xl font-bold text-white'>
                             Exchange
                         </h1>
-                        <button
-                            onClick={onSettingsClick}
-                            className='p-2 rounded-lg hover:bg-neutral-700 text-white/70 hover:text-white transition-all'
-                            aria-label='Settings'
-                        >
-                            <Settings className='w-5 h-5' />
-                        </button>
+                        <div className='flex items-center gap-2'>
+                            <button
+                                onClick={onHistoryClick}
+                                className='p-2 rounded-lg hover:bg-neutral-700 text-white/70 hover:text-white transition-all'
+                                aria-label='Historial de swaps'
+                                disabled={!isConnected}
+                            >
+                                <History className='w-5 h-5' />
+                            </button>
+                            <button
+                                onClick={onSettingsClick}
+                                className='p-2 rounded-lg hover:bg-neutral-700 text-white/70 hover:text-white transition-all'
+                                aria-label='Settings'
+                            >
+                                <Settings className='w-5 h-5' />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Token Selectors - Side by Side with overlapping Swap Button */}
@@ -228,7 +243,14 @@ export const SwapCard = memo(function SwapCard({
 
                         {/* Swap Button - Absolutely positioned */}
                         <div className='absolute left-1/2 -translate-x-1/2 z-10'>
-                            <SwapButton onSwap={onSwapTokens} />
+                            <SwapButton
+                                onSwap={
+                                    isHistoryOpen
+                                        ? onHistoryClick
+                                        : onSwapTokens
+                                }
+                                isHistoryOpen={isHistoryOpen}
+                            />
                         </div>
 
                         {/* To Token */}
@@ -308,7 +330,9 @@ export const SwapCard = memo(function SwapCard({
                                             : 'bg-blue-500 hover:bg-blue-600 text-white'
                                     }`}
                                 >
-                                    {hasBalanceError
+                                    {isHistoryOpen
+                                        ? 'Close history to swap'
+                                        : hasBalanceError
                                         ? `Insufficient ${fromToken?.symbol}`
                                         : isExecuting
                                         ? 'Swapping...'
