@@ -12,7 +12,8 @@ import { Token } from '@/types/token'
 import { SwapRoute } from '@/types/route'
 import { useSwapRoutes } from '@/hooks/useSwapRoutes'
 import { useTokenPricesContext } from '@/contexts/TokenPricesProvider'
-import { Fuel } from 'lucide-react'
+import { useTokens } from '@/hooks/useTokens'
+import { Fuel, ArrowRight } from 'lucide-react'
 import { RouteCardSkeleton } from './RouteCardSkeleton'
 
 interface SwapRoutesProps {
@@ -25,10 +26,47 @@ interface SwapRoutesProps {
 }
 
 // Helper function to format gas cost
-function formatGasCost(gasEstimate: number): string {
-    // Simplified gas cost calculation (this should be replaced with actual calculation)
-    const costInDollars = (gasEstimate / 1000000) * 0.01
-    return costInDollars < 0.01 ? '$0.01' : `$${costInDollars.toFixed(2)}`
+function formatGasCost(
+    gasEstimate: number,
+    hbarPrice: number = 0
+): {
+    usd: string | null
+    hbar: string
+} {
+    // Gas cost calculation based on EtaSwap's approach:
+    // gasEstimate is the estimated gas units
+    // Each gas unit costs approximately 0.000000082 HBAR
+    const approxCost1Gas = 0.000000082
+    const costInHbar = gasEstimate * approxCost1Gas
+
+    const hbar = `${costInHbar.toFixed(4)} HBAR`
+
+    // Convert to USD if price is available
+    if (hbarPrice > 0) {
+        const costInDollars = costInHbar * hbarPrice
+        const usd =
+            costInDollars < 0.01 ? '<$0.01' : `$${costInDollars.toFixed(2)}`
+        return { usd, hbar }
+    }
+
+    // Only HBAR if no price available
+    return { usd: null, hbar }
+}
+
+// Helper function to calculate minimum receive with slippage
+function calculateMinimumReceive(
+    outputAmount: string,
+    slippageTolerance: number,
+    decimals: number
+): string {
+    // Parse the output amount (human-readable format)
+    const amount = parseFloat(outputAmount)
+
+    // Apply slippage: minReceive = amount * (1 - slippage/100)
+    const minReceive = amount * (1 - slippageTolerance / 100)
+
+    // Format with appropriate decimals
+    return minReceive.toFixed(Math.min(decimals, 6))
 }
 
 export const SwapRoutes = memo(function SwapRoutes({
@@ -52,6 +90,7 @@ export const SwapRoutes = memo(function SwapRoutes({
         autoSlippage
     )
     const { prices } = useTokenPricesContext()
+    const { data: allTokens } = useTokens()
     const [selectedRoute, setSelectedRoute] = useState<number>(0)
 
     // Filter routes: if auto mode is enabled, show only the best route (first one)
@@ -123,6 +162,142 @@ export const SwapRoutes = memo(function SwapRoutes({
             </span>
         )
     }
+
+    // Helper function to get token info by address
+    const getTokenInfo = useCallback(
+        (address: string): { symbol: string; icon: string } => {
+            if (!allTokens) return { symbol: '???', icon: '' }
+
+            // Handle HBAR special case (address might be '0x0000000000000000000000000000000000000000' or 'HBAR')
+            if (
+                address === '0x0000000000000000000000000000000000000000' ||
+                address === 'HBAR' ||
+                address === '0.0.0'
+            ) {
+                const hbarToken = allTokens.find((t) => t.symbol === 'HBAR')
+                return {
+                    symbol: 'HBAR',
+                    icon: hbarToken?.icon || '/hbar.svg',
+                }
+            }
+
+            const token = allTokens.find(
+                (t) =>
+                    t.solidityAddress?.toLowerCase() ===
+                        address.toLowerCase() || t.address === address
+            )
+            return {
+                symbol: token?.symbol || address.substring(0, 6),
+                icon: token?.icon || '',
+            }
+        },
+        [allTokens]
+    )
+
+    // Helper function to parse and display swap route path
+    const renderSwapPath = useCallback(
+        (swapRoute: SwapRoute) => {
+            if (!swapRoute.route) return null
+
+            // route can be string[] or string[][]
+            // For single route: ['0x...', '0x...', '0x...']
+            // For split routes: [['0x...', '0x...'], ['0x...', '0x...']]
+            const routes = Array.isArray(swapRoute.route[0])
+                ? (swapRoute.route as string[][])
+                : [swapRoute.route as string[]]
+
+            // For split swaps, show multiple paths
+            if (routes.length > 1) {
+                return (
+                    <div className='space-y-1'>
+                        {routes.map((tokenPath, idx) => {
+                            const steps = tokenPath.length - 1
+                            return (
+                                <div
+                                    key={idx}
+                                    className='flex items-center gap-1.5 text-xs text-white/60'
+                                >
+                                    <span className='text-white/40'>
+                                        Route {idx + 1} ({steps}{' '}
+                                        {steps === 1 ? 'hop' : 'hops'}):
+                                    </span>
+                                    {tokenPath.map((tokenAddress, tokenIdx) => {
+                                        const tokenInfo =
+                                            getTokenInfo(tokenAddress)
+                                        return (
+                                            <span
+                                                key={tokenIdx}
+                                                className='flex items-center gap-1'
+                                            >
+                                                {tokenIdx > 0 && (
+                                                    <ArrowRight className='w-3 h-3' />
+                                                )}
+                                                <span className='flex items-center gap-1 text-white/70 font-medium'>
+                                                    {tokenInfo.icon && (
+                                                        <img
+                                                            src={tokenInfo.icon}
+                                                            alt={
+                                                                tokenInfo.symbol
+                                                            }
+                                                            className='w-4 h-4 rounded-full'
+                                                        />
+                                                    )}
+                                                    <span>
+                                                        {tokenInfo.symbol}
+                                                    </span>
+                                                </span>
+                                            </span>
+                                        )
+                                    })}
+                                </div>
+                            )
+                        })}
+                    </div>
+                )
+            }
+
+            // Single path (direct or multi-hop)
+            const tokenPath = routes[0]
+            const steps = tokenPath.length - 1
+
+            return (
+                <div className='flex items-center gap-2 text-xs'>
+                    <span className='text-white/50'>
+                        {steps === 1
+                            ? 'Direct swap'
+                            : `${steps} ${steps === 1 ? 'hop' : 'hops'}`}
+                        :
+                    </span>
+                    <div className='flex items-center gap-1.5 text-white/70'>
+                        {tokenPath.map((tokenAddress, idx) => {
+                            const tokenInfo = getTokenInfo(tokenAddress)
+                            return (
+                                <span
+                                    key={idx}
+                                    className='flex items-center gap-1.5'
+                                >
+                                    {idx > 0 && (
+                                        <ArrowRight className='w-3 h-3 text-white/40' />
+                                    )}
+                                    <span className='flex items-center gap-1 font-medium'>
+                                        {tokenInfo.icon && (
+                                            <img
+                                                src={tokenInfo.icon}
+                                                alt={tokenInfo.symbol}
+                                                className='w-4 h-4 rounded-full'
+                                            />
+                                        )}
+                                        <span>{tokenInfo.symbol}</span>
+                                    </span>
+                                </span>
+                            )
+                        })}
+                    </div>
+                </div>
+            )
+        },
+        [getTokenInfo]
+    )
 
     return (
         <div className='w-full'>
@@ -255,7 +430,7 @@ export const SwapRoutes = memo(function SwapRoutes({
                                 </div>
 
                                 {/* Exchange Summary and Gas/Time */}
-                                <div className='flex items-center justify-between text-sm'>
+                                <div className='flex items-end justify-between text-sm'>
                                     <div className='text-white/50'>
                                         1 {fromToken.symbol} ≈{' '}
                                         {(
@@ -266,14 +441,56 @@ export const SwapRoutes = memo(function SwapRoutes({
                                         {toToken.symbol}
                                     </div>
                                     <div className='flex items-center gap-4'>
-                                        <div className='flex items-center gap-1.5 text-white/60'>
-                                            <Fuel className='w-4 h-4' />
-                                            <span>
-                                                {formatGasCost(
-                                                    route.gasEstimate
-                                                )}
-                                            </span>
-                                        </div>
+                                        {(() => {
+                                            const gasCost = formatGasCost(
+                                                route.gasEstimate,
+                                                prices?.['HBAR'] || 0
+                                            )
+                                            return (
+                                                <div className='flex flex-col items-end text-white/60'>
+                                                    <div className='flex items-center gap-1.5'>
+                                                        <Fuel className='w-4 h-4' />
+                                                        <span className='text-sm'>
+                                                            {gasCost.usd ||
+                                                                gasCost.hbar}
+                                                        </span>
+                                                    </div>
+                                                    {gasCost.usd && (
+                                                        <span className='text-xs text-white/40'>
+                                                            {gasCost.hbar}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )
+                                        })()}
+                                    </div>
+                                </div>
+
+                                {/* Swap Route Path */}
+                                {route.route && (
+                                    <div className='mt-3 pt-3 border-t border-white/10'>
+                                        {renderSwapPath(route)}
+                                    </div>
+                                )}
+
+                                {/* Minimum Receive */}
+                                <div className='mt-3 pt-3 border-t border-white/10'>
+                                    <div className='flex items-center justify-between text-sm'>
+                                        <span className='text-white/50'>
+                                            Min. receive
+                                        </span>
+                                        <span className='text-white font-medium'>
+                                            {calculateMinimumReceive(
+                                                route.outputAmountFormatted,
+                                                slippageTolerance,
+                                                toToken.decimals
+                                            )}{' '}
+                                            {toToken.symbol}
+                                        </span>
+                                    </div>
+                                    <div className='text-xs text-white/40 mt-1 text-right'>
+                                        With {slippageTolerance.toFixed(2)}%
+                                        slippage tolerance
                                     </div>
                                 </div>
                             </div>
