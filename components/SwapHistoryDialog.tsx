@@ -149,7 +149,7 @@ export const SwapHistoryDialog = memo(function SwapHistoryDialog({
                             <AlertCircle className='w-12 h-12 text-red-500' />
                             <p className='text-red-400'>{error}</p>
                             <button
-                                onClick={refresh}
+                                onClick={() => refresh()}
                                 className='px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors'
                             >
                                 Reintentar
@@ -173,7 +173,7 @@ export const SwapHistoryDialog = memo(function SwapHistoryDialog({
                                         este contrato de DeraSwap
                                     </p>
                                     <button
-                                        onClick={refresh}
+                                        onClick={() => refresh()}
                                         className='text-sm text-purple-400 hover:text-purple-300 underline'
                                     >
                                         Actualizar
@@ -345,7 +345,7 @@ export const SwapHistoryDialog = memo(function SwapHistoryDialog({
                     {/* Refresh Button */}
                     {!isLoading && walletAddress && (
                         <button
-                            onClick={refresh}
+                            onClick={() => refresh()}
                             className='mt-4 w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-sm font-medium'
                         >
                             Actualizar
