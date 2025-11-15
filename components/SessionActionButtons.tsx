@@ -40,7 +40,7 @@ export function SessionActionButtons() {
         <button
             onClick={handleConnectClick}
             disabled={loading}
-            className='px-6 py-2 from-p bg-blue-500 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-all duration-200 text-white'
+            className='px-6 py-2 from-p bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-all duration-200 text-white'
         >
             {loading ? 'Connecting...' : 'Connect Wallet'}
         </button>

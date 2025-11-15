@@ -212,14 +212,15 @@ export const SwapCard = memo(function SwapCard({
                             Exchange
                         </h1>
                         <div className='flex items-center gap-2'>
-                            <button
-                                onClick={onHistoryClick}
-                                className='p-2 rounded-lg hover:bg-neutral-700 text-white/70 hover:text-white transition-all'
-                                aria-label='Historial de swaps'
-                                disabled={!isConnected}
-                            >
-                                <History className='w-5 h-5' />
-                            </button>
+                            {isConnected && (
+                                <button
+                                    onClick={onHistoryClick}
+                                    className='p-2 rounded-lg hover:bg-neutral-700 text-white/70 hover:text-white transition-all'
+                                    aria-label='Historial de swaps'
+                                >
+                                    <History className='w-5 h-5' />
+                                </button>
+                            )}
                             <button
                                 onClick={onSettingsClick}
                                 className='p-2 rounded-lg hover:bg-neutral-700 text-white/70 hover:text-white transition-all'
@@ -297,8 +298,8 @@ export const SwapCard = memo(function SwapCard({
                                     disabled={isAssociating}
                                     className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
                                         isAssociating
-                                            ? 'bg-purple-500/50 text-white cursor-wait'
-                                            : 'bg-purple-500 hover:bg-purple-600 text-white'
+                                            ? 'bg-blue-500 text-white opacity-50 cursor-wait'
+                                            : 'bg-blue-500 hover:bg-blue-600 text-white'
                                     }`}
                                 >
                                     {isAssociating
@@ -312,10 +313,6 @@ export const SwapCard = memo(function SwapCard({
                                         {associationError}
                                     </div>
                                 )}
-                                <div className='text-xs text-white/50 text-center'>
-                                    You need to associate {toToken?.symbol}{' '}
-                                    before receiving it
-                                </div>
                             </div>
                         ) : (
                             <div className='space-y-3'>

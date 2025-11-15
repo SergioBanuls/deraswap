@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { Header } from '@/components/Header'
 import { SwapCard } from '@/components/SwapCard'
 import { SwapRoutes } from '@/components/SwapRoutes'
 import { SwapHistory } from '@/components/SwapHistory'
@@ -160,14 +159,14 @@ export default function Home() {
                 {/* Grid layout - always present, mobile stack, desktop side-by-side */}
                 <div
                     className={`grid grid-cols-1 gap-6 items-center lg:items-start transition-all duration-900 ease-in-out ${
-                        (showRoutes && view === 'swap') || view === 'history'
+                        showRoutes && view === 'swap'
                             ? 'lg:grid-cols-2 lg:justify-center'
                             : 'lg:grid-cols-1 lg:justify-items-center'
                     }`}
                 >
-                    {/* Left Column - Swap Card, Settings Card, or Token Select Card */}
+                    {/* Left Column - Swap Card, Settings Card, History, or Token Select Card */}
                     <div className='w-full max-w-md mx-auto transition-all duration-900 ease-in-out relative z-10'>
-                        {view === 'swap' || view === 'history' ? (
+                        {view === 'swap' ? (
                             <SwapCard
                                 fromToken={fromToken}
                                 toToken={toToken}
@@ -184,7 +183,12 @@ export default function Home() {
                                 fromTokenBalance={fromTokenBalance}
                                 hasBalanceError={hasBalanceError}
                                 onBalanceError={setHasBalanceError}
-                                isHistoryOpen={view === 'history'}
+                                isHistoryOpen={false}
+                            />
+                        ) : view === 'history' ? (
+                            <SwapHistory
+                                walletAddress={account}
+                                onClose={() => setView('swap')}
                             />
                         ) : view === 'settings' ? (
                             <SettingsCard
@@ -212,11 +216,10 @@ export default function Home() {
                         )}
                     </div>
 
-                    {/* Right Column - Swap Routes or History */}
+                    {/* Right Column - Swap Routes */}
                     <div
                         className={`w-full max-w-md mx-auto transition-all duration-700 ease-in-out relative z-0 ${
-                            (showRoutes && view === 'swap') ||
-                            view === 'history'
+                            showRoutes && view === 'swap'
                                 ? 'opacity-100 scale-100'
                                 : 'opacity-0 lg:-translate-x-[50%] scale-95 pointer-events-none'
                         }`}
@@ -229,12 +232,6 @@ export default function Home() {
                                 slippageTolerance={effectiveSlippage}
                                 autoSlippage={settings.autoSlippage}
                                 onRouteSelect={setSelectedRoute}
-                            />
-                        )}
-                        {view === 'history' && (
-                            <SwapHistory
-                                walletAddress={account}
-                                onClose={() => setView('swap')}
                             />
                         )}
                     </div>

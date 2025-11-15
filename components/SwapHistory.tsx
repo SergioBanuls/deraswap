@@ -11,7 +11,7 @@
 import { memo, useMemo } from 'react'
 import { useSwapHistory } from '@/hooks/useSwapHistory'
 import { useTokens } from '@/hooks/useTokens'
-import { ExternalLink, ArrowRight, Loader2, AlertCircle, X } from 'lucide-react'
+import { ExternalLink, ArrowRight, Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 
 interface SwapHistoryProps {
@@ -92,25 +92,21 @@ export const SwapHistory = memo(function SwapHistory({
     }
 
     return (
-        <div className='bg-neutral-900 rounded-3xl p-6 w-full h-full'>
-            {/* Header */}
-            <div className='mb-6 relative'>
-                <button
-                    onClick={onClose}
-                    className='absolute -top-2 -right-2 p-2 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-white transition-all'
-                    aria-label='Close history'
-                >
-                    <X className='w-5 h-5' />
-                </button>
-                <h2 className='text-2xl font-bold text-white mb-2'>
-                    Swap History
-                </h2>
-                <p className='text-neutral-400 text-sm'>
-                    {walletAddress
-                        ? 'Transactions made with your wallet'
-                        : 'Connect your wallet to view history'}
-                </p>
-            </div>
+        <div className='w-full'>
+            <div className='bg-neutral-900 rounded-3xl p-6 min-h-[420px] flex flex-col'>
+                {/* Header */}
+                <div className='flex items-center justify-between mb-4'>
+                    <div className='flex items-center gap-3'>
+                        <button
+                            onClick={onClose}
+                            className='p-2 rounded-lg hover:bg-neutral-700 text-white/70 hover:text-white transition-all'
+                            aria-label='Back'
+                        >
+                            <ArrowLeft className='w-5 h-5' />
+                        </button>
+                        <h1 className='text-2xl font-bold text-white'>Swap History</h1>
+                    </div>
+                </div>
 
             {/* Content */}
             <div className='space-y-4'>
@@ -184,7 +180,7 @@ export const SwapHistory = memo(function SwapHistory({
                                             href={swap.explorerUrl}
                                             target='_blank'
                                             rel='noopener noreferrer'
-                                            className='flex items-center gap-1.5 text-sm text-purple-400 hover:text-purple-300 transition-colors'
+                                            className='flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-400 transition-colors'
                                         >
                                             View on HashScan
                                             <ExternalLink className='w-3.5 h-3.5' />
@@ -226,7 +222,7 @@ export const SwapHistory = memo(function SwapHistory({
                                         </div>
 
                                         {/* Arrow */}
-                                        <ArrowRight className='w-5 h-5 text-neutral-500 flex-shrink-0' />
+                                        <ArrowRight className='w-5 h-5 text-neutral-500 shrink-0' />
 
                                         {/* To Token */}
                                         <div className='flex items-center gap-3 flex-1 justify-end'>
@@ -260,13 +256,6 @@ export const SwapHistory = memo(function SwapHistory({
                                             )}
                                         </div>
                                     </div>
-
-                                    {/* Transaction Hash */}
-                                    <div className='mt-3 pt-3 border-t border-neutral-700/50'>
-                                        <span className='text-xs text-neutral-500 font-mono break-all'>
-                                            {swap.txHash}
-                                        </span>
-                                    </div>
                                 </div>
                             )
                         })}
@@ -276,7 +265,7 @@ export const SwapHistory = memo(function SwapHistory({
                             <button
                                 onClick={() => loadMore()}
                                 disabled={isLoadingMore}
-                                className='w-full py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-neutral-800 disabled:text-neutral-500 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 mt-3'
+                                className='w-full py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-neutral-800 disabled:text-neutral-500 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 mt-3'
                             >
                                 {isLoadingMore ? (
                                     <>
@@ -290,6 +279,7 @@ export const SwapHistory = memo(function SwapHistory({
                         )}
                     </div>
                 )}
+            </div>
             </div>
         </div>
     )
