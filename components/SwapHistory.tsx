@@ -113,7 +113,7 @@ export const SwapHistory = memo(function SwapHistory({
                 {/* Loading State */}
                 {isLoading && (
                     <div className='flex flex-col items-center justify-center py-12 space-y-4'>
-                        <Loader2 className='w-8 h-8 text-purple-400 animate-spin' />
+                        <Loader2 className='w-8 h-8 text-blue-500 animate-spin' />
                         <p className='text-neutral-400 text-sm'>
                             Loading history...
                         </p>

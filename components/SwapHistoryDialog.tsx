@@ -136,9 +136,9 @@ export const SwapHistoryDialog = memo(function SwapHistoryDialog({
                     {/* Loading State */}
                     {isLoading && (
                         <div className='flex flex-col items-center justify-center py-12 gap-3'>
-                            <Loader2 className='w-8 h-8 animate-spin text-purple-500' />
+                            <Loader2 className='w-8 h-8 animate-spin text-blue-500' />
                             <p className='text-neutral-400'>
-                                Cargando historial...
+                                Loading history...
                             </p>
                         </div>
                     )}
@@ -150,9 +150,9 @@ export const SwapHistoryDialog = memo(function SwapHistoryDialog({
                             <p className='text-red-400'>{error}</p>
                             <button
                                 onClick={() => refresh()}
-                                className='px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors'
+                                className='px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors'
                             >
-                                Reintentar
+                                Retry
                             </button>
                         </div>
                     )}
@@ -163,25 +163,21 @@ export const SwapHistoryDialog = memo(function SwapHistoryDialog({
                             <div className='text-6xl'>📊</div>
                             <p className='text-neutral-400 text-center'>
                                 {walletAddress
-                                    ? 'No se encontraron swaps recientes'
-                                    : 'Conecta tu wallet para ver el historial'}
+                                    ? 'No recent swaps found'
+                                    : 'Connect your wallet to view history'}
                             </p>
                             {walletAddress && (
                                 <>
                                     <p className='text-xs text-neutral-500 text-center max-w-md'>
-                                        Solo se muestran swaps realizados con
-                                        este contrato de DeraSwap
+                                        Only recent swaps made with
+                                        this DeraSwap contract
                                     </p>
                                     <button
                                         onClick={() => refresh()}
-                                        className='text-sm text-purple-400 hover:text-purple-300 underline'
+                                        className='text-sm text-blue-500 hover:text-blue-400 underline'
                                     >
-                                        Actualizar
+                                        Refresh
                                     </button>
-                                    <p className='text-xs text-neutral-600 text-center max-w-md mt-2'>
-                                        Abre la consola del navegador (F12) para
-                                        ver información de debug
-                                    </p>
                                 </>
                             )}
                         </div>
@@ -219,9 +215,9 @@ export const SwapHistoryDialog = memo(function SwapHistoryDialog({
                                                 href={swap.explorerUrl}
                                                 target='_blank'
                                                 rel='noopener noreferrer'
-                                                className='flex items-center gap-1.5 text-sm text-purple-400 hover:text-purple-300 transition-colors'
+                                                className='flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-400 transition-colors'
                                             >
-                                                Ver en HashScan
+                                                View on HashScan
                                                 <ExternalLink className='w-3.5 h-3.5' />
                                             </a>
                                         </div>
@@ -232,19 +228,19 @@ export const SwapHistoryDialog = memo(function SwapHistoryDialog({
                                             swap.toToken === 'N/A' ? (
                                                 // Simplified view when token details are not available
                                                 <div className='flex items-center gap-3 flex-1'>
-                                                    <div className='w-10 h-10 rounded-full bg-purple-600/20 flex items-center justify-center'>
-                                                        <ArrowRight className='w-5 h-5 text-purple-400' />
+                                                    <div className='w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center'>
+                                                        <ArrowRight className='w-5 h-5 text-blue-400' />
                                                     </div>
                                                     <div className='flex flex-col'>
-                                                        <span className='font-semibold text-purple-400'>
-                                                            Swap Ejecutado
+                                                        <span className='font-semibold text-blue-400'>
+                                                            Swap Executed
                                                         </span>
                                                         <span className='text-xs text-neutral-400'>
                                                             {swap.aggregatorId &&
                                                             swap.aggregatorId !==
                                                                 'Unknown'
-                                                                ? `vía ${swap.aggregatorId}`
-                                                                : 'Detalles en HashScan'}
+                                                                ? `via ${swap.aggregatorId}`
+                                                                : 'Details on HashScan'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -348,7 +344,7 @@ export const SwapHistoryDialog = memo(function SwapHistoryDialog({
                             onClick={() => refresh()}
                             className='mt-4 w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-sm font-medium'
                         >
-                            Actualizar
+                            Refresh
                         </button>
                     )}
                 </div>
