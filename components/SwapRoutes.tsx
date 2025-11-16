@@ -13,7 +13,7 @@ import { SwapRoute } from '@/types/route'
 import { useSwapRoutes } from '@/hooks/useSwapRoutes'
 import { useTokenPricesContext } from '@/contexts/TokenPricesProvider'
 import { useTokens } from '@/hooks/useTokens'
-import { Fuel, ArrowRight } from 'lucide-react'
+import { Fuel, ArrowRight, ChevronDown } from 'lucide-react'
 import { RouteCardSkeleton } from './RouteCardSkeleton'
 
 interface SwapRoutesProps {
@@ -92,6 +92,7 @@ export const SwapRoutes = memo(function SwapRoutes({
     const { prices } = useTokenPricesContext()
     const { data: allTokens } = useTokens()
     const [selectedRoute, setSelectedRoute] = useState<number>(0)
+    const [expandedRoutes, setExpandedRoutes] = useState<Set<number>>(new Set())
 
     // Filter routes: if auto mode is enabled, show only the best route (first one)
     const displayRoutes =
@@ -119,6 +120,20 @@ export const SwapRoutes = memo(function SwapRoutes({
         },
         [onRouteSelect, routes]
     )
+
+    const toggleRouteDetails = useCallback((index: number, e: React.MouseEvent) => {
+        e.stopPropagation()
+        setExpandedRoutes((prev) => {
+            const newSet = new Set(prev)
+            if (newSet.has(index)) {
+                newSet.delete(index)
+            } else {
+                newSet.add(index)
+            }
+            return newSet
+        })
+    }, [])
+
     // Helper function to format route names and identify DEX version
     const formatRouteName = (name: string | string[]) => {
         const routes: string[] = []
@@ -211,16 +226,11 @@ export const SwapRoutes = memo(function SwapRoutes({
                 return (
                     <div className='space-y-1'>
                         {routes.map((tokenPath, idx) => {
-                            const steps = tokenPath.length - 1
                             return (
                                 <div
                                     key={idx}
                                     className='flex items-center gap-1.5 text-xs text-white/60'
                                 >
-                                    <span className='text-white/40'>
-                                        Route {idx + 1} ({steps}{' '}
-                                        {steps === 1 ? 'hop' : 'hops'}):
-                                    </span>
                                     {tokenPath.map((tokenAddress, tokenIdx) => {
                                         const tokenInfo =
                                             getTokenInfo(tokenAddress)
@@ -230,15 +240,15 @@ export const SwapRoutes = memo(function SwapRoutes({
                                                 className='flex items-center gap-1'
                                             >
                                                 {tokenIdx > 0 && (
-                                                    <ArrowRight className='w-3 h-3' />
+                                                    <ArrowRight className='w-4 h-4' />
                                                 )}
-                                                <span className='flex items-center gap-1 text-white/70 font-medium'>
+                                                <span className='flex items-center gap-1.5 text-white/70 font-medium'>
                                                     <img
                                                         src={tokenInfo.icon || '/NotFound.png'}
                                                         alt={
                                                             tokenInfo.symbol
                                                         }
-                                                        className='w-4 h-4 rounded-full'
+                                                        className='w-6 h-6 rounded-full'
                                                     />
                                                     <span>
                                                         {tokenInfo.symbol}
@@ -256,16 +266,9 @@ export const SwapRoutes = memo(function SwapRoutes({
 
             // Single path (direct or multi-hop)
             const tokenPath = routes[0]
-            const steps = tokenPath.length - 1
 
             return (
                 <div className='flex items-center gap-2 text-xs'>
-                    <span className='text-white/50'>
-                        {steps === 1
-                            ? 'Direct swap'
-                            : `${steps} ${steps === 1 ? 'hop' : 'hops'}`}
-                        :
-                    </span>
                     <div className='flex items-center gap-1.5 text-white/70'>
                         {tokenPath.map((tokenAddress, idx) => {
                             const tokenInfo = getTokenInfo(tokenAddress)
@@ -275,13 +278,13 @@ export const SwapRoutes = memo(function SwapRoutes({
                                     className='flex items-center gap-1.5'
                                 >
                                     {idx > 0 && (
-                                        <ArrowRight className='w-3 h-3 text-white/40' />
+                                        <ArrowRight className='w-4 h-4 text-white/40' />
                                     )}
-                                    <span className='flex items-center gap-1 font-medium'>
+                                    <span className='flex items-center gap-1.5 font-medium'>
                                         <img
                                             src={tokenInfo.icon || '/NotFound.png'}
                                             alt={tokenInfo.symbol}
-                                            className='w-4 h-4 rounded-full'
+                                            className='w-6 h-6 rounded-full'
                                         />
                                         <span>{tokenInfo.symbol}</span>
                                     </span>
@@ -423,10 +426,54 @@ export const SwapRoutes = memo(function SwapRoutes({
                                             </div>
                                         </div>
                                     </div>
+                                    {/* Toggle Details Arrow */}
+                                    <button
+                                        onClick={(e) => toggleRouteDetails(index, e)}
+                                        className='text-white/70 hover:text-white transition-all p-1 rounded-full bg-white/10 hover:bg-white/15'
+                                    >
+                                        <ChevronDown
+                                            className={`w-4 h-4 transition-transform duration-200 ${
+                                                expandedRoutes.has(index) ? 'rotate-180' : ''
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+
+                                {/* Collapsible Details */}
+                                <div
+                                    className={`overflow-hidden transition-all duration-600 ease-in-out ${
+                                        expandedRoutes.has(index)
+                                            ? 'max-h-96'
+                                            : 'max-h-0'
+                                    }`}
+                                >
+                                    {/* Swap Route Path */}
+                                    {route.route && (
+                                        <div className='mt-1 pt-1'>
+                                            {renderSwapPath(route)}
+                                        </div>
+                                    )}
+
+                                    {/* Minimum Receive */}
+                                    <div className='mt-1 pt-1'>
+                                        <div className='flex items-center justify-start text-sm'>
+                                            <span className='text-white/50'>
+                                                Min. receive: 
+                                            </span>
+                                            <span className='text-white font-medium ml-1'>
+                                                {calculateMinimumReceive(
+                                                    route.outputAmountFormatted,
+                                                    slippageTolerance,
+                                                    toToken.decimals
+                                                )}{' '}
+                                                {toToken.symbol}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Exchange Summary and Gas/Time */}
-                                <div className='flex items-end justify-between text-sm'>
+                                <div className='flex items-end justify-between text-sm mt-2'>
                                     <div className='text-white/50'>
                                         1 {fromToken.symbol} ≈{' '}
                                         {(
@@ -459,34 +506,6 @@ export const SwapRoutes = memo(function SwapRoutes({
                                                 </div>
                                             )
                                         })()}
-                                    </div>
-                                </div>
-
-                                {/* Swap Route Path */}
-                                {route.route && (
-                                    <div className='mt-3 pt-3 border-t border-white/10'>
-                                        {renderSwapPath(route)}
-                                    </div>
-                                )}
-
-                                {/* Minimum Receive */}
-                                <div className='mt-3 pt-3 border-t border-white/10'>
-                                    <div className='flex items-center justify-between text-sm'>
-                                        <span className='text-white/50'>
-                                            Min. receive
-                                        </span>
-                                        <span className='text-white font-medium'>
-                                            {calculateMinimumReceive(
-                                                route.outputAmountFormatted,
-                                                slippageTolerance,
-                                                toToken.decimals
-                                            )}{' '}
-                                            {toToken.symbol}
-                                        </span>
-                                    </div>
-                                    <div className='text-xs text-white/40 mt-1 text-right'>
-                                        With {slippageTolerance.toFixed(2)}%
-                                        slippage tolerance
                                     </div>
                                 </div>
                             </div>
