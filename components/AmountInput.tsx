@@ -109,7 +109,10 @@ export function AmountInput({
             const balanceBigInt = BigInt(balance)
             const reserve = BigInt(GAS_RESERVE_HBAR)
 
-            maxAmount = (balanceBigInt - reserve).toString()
+            // Ensure we don't go negative if balance is less than reserve
+            maxAmount = balanceBigInt > reserve 
+                ? (balanceBigInt - reserve).toString()
+                : '0'
         }
 
         const formatted = formatAmount(maxAmount, token.decimals)
