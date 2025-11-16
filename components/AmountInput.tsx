@@ -171,7 +171,7 @@ export function AmountInput({
                 {token ? (
                     <div className='relative w-10 h-10 rounded-full overflow-hidden bg-white/10 shrink-0'>
                         <Image
-                            src={token.icon}
+                            src={token.icon || '/NotFound.png'}
                             alt={token.symbol}
                             fill
                             className='object-cover'

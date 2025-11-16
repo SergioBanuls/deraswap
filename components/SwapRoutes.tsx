@@ -233,15 +233,13 @@ export const SwapRoutes = memo(function SwapRoutes({
                                                     <ArrowRight className='w-3 h-3' />
                                                 )}
                                                 <span className='flex items-center gap-1 text-white/70 font-medium'>
-                                                    {tokenInfo.icon && (
-                                                        <img
-                                                            src={tokenInfo.icon}
-                                                            alt={
-                                                                tokenInfo.symbol
-                                                            }
-                                                            className='w-4 h-4 rounded-full'
-                                                        />
-                                                    )}
+                                                    <img
+                                                        src={tokenInfo.icon || '/NotFound.png'}
+                                                        alt={
+                                                            tokenInfo.symbol
+                                                        }
+                                                        className='w-4 h-4 rounded-full'
+                                                    />
                                                     <span>
                                                         {tokenInfo.symbol}
                                                     </span>
@@ -280,13 +278,11 @@ export const SwapRoutes = memo(function SwapRoutes({
                                         <ArrowRight className='w-3 h-3 text-white/40' />
                                     )}
                                     <span className='flex items-center gap-1 font-medium'>
-                                        {tokenInfo.icon && (
-                                            <img
-                                                src={tokenInfo.icon}
-                                                alt={tokenInfo.symbol}
-                                                className='w-4 h-4 rounded-full'
-                                            />
-                                        )}
+                                        <img
+                                            src={tokenInfo.icon || '/NotFound.png'}
+                                            alt={tokenInfo.symbol}
+                                            className='w-4 h-4 rounded-full'
+                                        />
                                         <span>{tokenInfo.symbol}</span>
                                     </span>
                                 </span>
@@ -378,7 +374,7 @@ export const SwapRoutes = memo(function SwapRoutes({
                                     <div className='flex items-center gap-3'>
                                         <div className='relative'>
                                             <img
-                                                src={toToken.icon}
+                                                src={toToken.icon || '/NotFound.png'}
                                                 alt={toToken.symbol}
                                                 className='w-10 h-10 rounded-full'
                                             />

@@ -21,7 +21,7 @@ export function TokenSelector({ label, selectedToken, onClick }: TokenSelectorPr
           <>
             <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0">
               <Image
-                src={selectedToken.icon}
+                src={selectedToken.icon || '/NotFound.png'}
                 alt={selectedToken.symbol}
                 fill
                 className="object-cover"
