@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { SwapStep } from '@/hooks/useSwapExecution'
 import { Token } from '@/types/token'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import {
     CheckCircle2,
     Loader2,
@@ -207,6 +207,9 @@ export function SwapProgressDialog({
                     }
                 }}
             >
+                <DialogTitle className="sr-only">
+                    {isSuccess ? 'Swap Complete' : isError ? 'Swap Failed' : 'Swap in Progress'}
+                </DialogTitle>
                 {/* Success State */}
                 {isSuccess && (
                     <div className='p-8 text-center space-y-6'>
