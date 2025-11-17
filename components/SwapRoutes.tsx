@@ -7,7 +7,8 @@
 
 'use client'
 
-import { memo, useState, useCallback, useEffect } from 'react'
+import { memo, useState, useCallback, useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Token } from '@/types/token'
 import { SwapRoute } from '@/types/route'
 import { useSwapRoutes } from '@/hooks/useSwapRoutes'
@@ -15,6 +16,7 @@ import { useTokenPricesContext } from '@/contexts/TokenPricesProvider'
 import { useTokens } from '@/hooks/useTokens'
 import { Fuel, ArrowRight, ChevronDown } from 'lucide-react'
 import { RouteCardSkeleton } from './RouteCardSkeleton'
+import { CountdownRing } from './CountdownRing'
 
 interface SwapRoutesProps {
     fromToken: Token | null
@@ -77,9 +79,11 @@ export const SwapRoutes = memo(function SwapRoutes({
     autoSlippage,
     onRouteSelect,
 }: SwapRoutesProps) {
+    const queryClient = useQueryClient()
     const {
         data: routes,
         isLoading,
+        isRefetching,
         error,
     } = useSwapRoutes(
         fromToken,
@@ -93,10 +97,86 @@ export const SwapRoutes = memo(function SwapRoutes({
     const { data: allTokens } = useTokens()
     const [selectedRoute, setSelectedRoute] = useState<number>(0)
     const [expandedRoutes, setExpandedRoutes] = useState<Set<number>>(new Set())
+    
+    // Track previous params to detect changes
+    const prevParamsRef = useRef({
+        fromToken: fromToken?.address,
+        toToken: toToken?.address,
+        amount,
+        slippageTolerance,
+    })
+    
+    // State to trigger countdown reset
+    const [countdownKey, setCountdownKey] = useState(0)
 
     // Filter routes: if auto mode is enabled, show only the best route (first one)
     const displayRoutes =
         autoSlippage && routes && routes.length > 0 ? [routes[0]] : routes
+
+    // Log refetching state changes
+    useEffect(() => {
+        if (isRefetching) {
+            console.log('🔄 Routes refetching started...')
+        } else if (!isLoading) {
+            console.log('✅ Routes refetch completed')
+        }
+    }, [isRefetching, isLoading])
+
+    // Reset countdown when params change
+    useEffect(() => {
+        const currentParams = {
+            fromToken: fromToken?.address,
+            toToken: toToken?.address,
+            amount,
+            slippageTolerance,
+        }
+        
+        const prevParams = prevParamsRef.current
+        
+        // Check if any param changed
+        if (
+            prevParams.fromToken !== currentParams.fromToken ||
+            prevParams.toToken !== currentParams.toToken ||
+            prevParams.amount !== currentParams.amount ||
+            prevParams.slippageTolerance !== currentParams.slippageTolerance
+        ) {
+            console.log('🔄 Swap params changed - resetting countdown timer')
+            console.log('  Previous:', prevParams)
+            console.log('  Current:', currentParams)
+            
+            // Reset countdown by changing the key
+            setCountdownKey((prev) => prev + 1)
+            prevParamsRef.current = currentParams
+        }
+    }, [fromToken?.address, toToken?.address, amount, slippageTolerance])
+    
+    // Handle countdown complete - refetch routes
+    const handleCountdownComplete = useCallback(() => {
+        if (fromToken && toToken && amount) {
+            console.log('⏰ Countdown complete - triggering route refetch')
+            console.log('  Params:', {
+                fromToken: fromToken.symbol,
+                toToken: toToken.symbol,
+                amount,
+                slippageTolerance,
+                autoSlippage,
+            })
+            
+            queryClient.refetchQueries({
+                queryKey: [
+                    'swapRoutes',
+                    fromToken?.address,
+                    toToken?.address,
+                    amount,
+                    autoSlippage ? 'auto' : slippageTolerance,
+                ],
+            })
+            
+            console.log('✅ Refetch triggered')
+            // Reset countdown after refetch
+            setCountdownKey((prev) => prev + 1)
+        }
+    }, [queryClient, fromToken, toToken, amount, slippageTolerance, autoSlippage])
 
     // Auto-select the first route (cheapest) when routes are loaded
     const handleAutoSelect = useCallback(() => {
@@ -299,20 +379,32 @@ export const SwapRoutes = memo(function SwapRoutes({
     )
 
     return (
-        <div className='w-full'>
+        <div className='w-full relative'>
             {/* Header */}
             <div className='bg-neutral-900 rounded-t-3xl p-6 pb-4'>
                 <div className='flex items-center justify-between'>
                     <h2 className='text-2xl font-bold text-white'>Receive</h2>
-                    {isLoading && (
-                        <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500'></div>
-                    )}
+                    <div className='flex items-center gap-3'>
+                        {/* Countdown Ring - only show when routes are loaded and not initially loading */}
+                        {!isLoading && routes && routes.length > 0 && (
+                            <CountdownRing
+                                key={countdownKey}
+                                duration={30000}
+                                isRefetching={isRefetching}
+                                onComplete={handleCountdownComplete}
+                            />
+                        )}
+                        {/* Loading spinner during initial load */}
+                        {isLoading && (
+                            <div className='animate-spin rounded-full border-b-2 border-blue-500' style={{ width: 28, height: 28 }}></div>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* Routes Container */}
             <div className='bg-neutral-900 rounded-b-3xl p-6 pt-2 space-y-3 max-h-[600px] overflow-y-auto'>
-                {isLoading && (
+                {(isLoading || isRefetching) && (
                     <>
                         {[1, 2, 3].map((i) => (
                             <RouteCardSkeleton key={i} showBadge={i === 1} />
@@ -320,7 +412,7 @@ export const SwapRoutes = memo(function SwapRoutes({
                     </>
                 )}
 
-                {error && !isLoading && (
+                {error && !isLoading && !isRefetching && (
                     <div className='text-red-400 text-sm text-center py-4'>
                         {error instanceof Error
                             ? error.message
@@ -329,6 +421,7 @@ export const SwapRoutes = memo(function SwapRoutes({
                 )}
 
                 {!isLoading &&
+                    !isRefetching &&
                     !error &&
                     (!displayRoutes || displayRoutes.length === 0) && (
                         <div className='text-white/60 text-sm text-center py-4'>
@@ -337,6 +430,7 @@ export const SwapRoutes = memo(function SwapRoutes({
                     )}
 
                 {!isLoading &&
+                    !isRefetching &&
                     fromToken &&
                     toToken &&
                     displayRoutes &&

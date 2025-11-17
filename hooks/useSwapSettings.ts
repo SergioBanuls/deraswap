@@ -31,7 +31,7 @@ function loadSettings(): SwapSettings {
       // Refresh deadline to prevent expired timestamps
       return {
         ...parsed,
-        deadline: Math.floor(Date.now() / 1000) + 20 * 60,
+        deadline: Math.floor(Date.now() / 1000) + 5 * 60,
       };
     }
   } catch (error) {
@@ -147,7 +147,7 @@ export function useSwapSettings() {
   const resetSettings = useCallback(() => {
     setSettings({
       ...DEFAULT_SWAP_SETTINGS,
-      deadline: Math.floor(Date.now() / 1000) + 20 * 60, // Refresh deadline
+      deadline: Math.floor(Date.now() / 1000) + 5 * 60, // Refresh deadline
     });
   }, []);
 

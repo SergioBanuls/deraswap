@@ -134,6 +134,9 @@ export const SwapCard = memo(function SwapCard({
                 ? effectiveSlippage
                 : settings.slippageTolerance
 
+        // Refresh deadline to ensure it's in the future (5 minutes from now)
+        const freshDeadline = Math.floor(Date.now() / 1000) + 5 * 60
+
         await executeSwap({
             route: selectedRoute,
             fromToken,
@@ -142,6 +145,7 @@ export const SwapCard = memo(function SwapCard({
             settings: {
                 ...settings,
                 slippageTolerance: slippage, // Use effective slippage
+                deadline: freshDeadline, // Always use fresh deadline
             },
         })
     }, [

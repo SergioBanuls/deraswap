@@ -389,6 +389,7 @@ export function useSwapRoutes(
         staleTime: 30 * 1000, // 30s
         gcTime: 5 * 60 * 1000, // 5min
         refetchOnWindowFocus: true,
+        refetchInterval: false, // Manual refetch control via countdown timer
         retry: 2,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     })

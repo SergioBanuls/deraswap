@@ -18,7 +18,7 @@ export interface SwapValidationResult {
 
 export const DEFAULT_SWAP_SETTINGS: SwapSettings = {
   slippageTolerance: 0.5, // 0.5% default (used when autoSlippage is off)
-  deadline: Math.floor(Date.now() / 1000) + 20 * 60, // 20 minutes from now
+  deadline: Math.floor(Date.now() / 1000) + 5 * 60, // 5 minutes from now
   autoSlippage: true, // Auto mode enabled by default
 };
 
