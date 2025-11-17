@@ -27,7 +27,8 @@ export interface ApprovalParams {
     tokenId: string // Hedera token ID (0.0.X)
     amount: string // Amount in smallest units
     ownerAccountId: string // User's account ID
-    spenderAddress: string // Router contract address
+    spenderAddress: string // Router contract EVM address (0x...)
+    spenderAccountId?: string // Router contract Account ID (0.0.X) - used for checking allowance
 }
 
 /**
@@ -39,7 +40,7 @@ export interface ApprovalParams {
 export async function checkAllowance(
     params: ApprovalParams
 ): Promise<AllowanceStatus> {
-    const { tokenId, amount, ownerAccountId, spenderAddress } = params
+    const { tokenId, amount, ownerAccountId, spenderAddress, spenderAccountId } = params
 
     try {
         // Query Mirror Node for token allowances
@@ -59,15 +60,31 @@ export async function checkAllowance(
 
         const data = await response.json()
 
+        // Debug: Log all allowances to see what format we're getting
+        console.log('🔍 All allowances from Mirror Node:', data.allowances)
+        console.log('🔍 Looking for token:', tokenId, 'spender Account ID:', spenderAccountId, 'spender EVM:', spenderAddress)
+
+        // Mirror Node returns spender as Account ID (0.0.X), not EVM address
+        // So we need to use spenderAccountId for comparison
+        const spenderToMatch = spenderAccountId || spenderAddress
+
         // Find allowance for this specific token and spender
         const allowance = data.allowances?.find(
             (a: any) =>
                 a.token_id === tokenId &&
-                a.spender.toLowerCase() === spenderAddress.toLowerCase()
+                a.spender === spenderToMatch
         )
+
+        console.log('🔍 Found allowance:', allowance)
 
         const currentAllowance = allowance?.amount_granted || '0'
         const hasAllowance = BigInt(currentAllowance) >= BigInt(amount)
+
+        console.log('🔍 Allowance check:', {
+            currentAllowance,
+            required: amount,
+            hasAllowance,
+        })
 
         return {
             hasAllowance,

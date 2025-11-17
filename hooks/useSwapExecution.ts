@@ -315,6 +315,7 @@ export function useSwapExecution() {
                         amount: requiredAmount,
                         ownerAccountId: account,
                         spenderAddress: router.address,
+                        spenderAccountId: router.hederaId, // Use Account ID format for Mirror Node lookup
                     }
 
                     const approvalResult = await requestApproval(approvalParams)
