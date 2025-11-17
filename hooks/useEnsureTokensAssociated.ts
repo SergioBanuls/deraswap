@@ -4,9 +4,11 @@ import axios from 'axios';
 interface TokenAssociationResult {
   tokenId: string;
   alreadyAssociatedToExchange: boolean;
-  alreadyAssociatedToAdapter: boolean;
+  alreadyAssociatedToAdapterV2: boolean;
+  alreadyAssociatedToAdapterV1: boolean;
   associatedToExchange: boolean;
-  associatedToAdapter: boolean;
+  associatedToAdapterV2: boolean;
+  associatedToAdapterV1: boolean;
   error?: string;
 }
 
@@ -15,9 +17,10 @@ interface EnsureTokensResponse {
   results: TokenAssociationResult[];
   summary: {
     total: number;
-    alreadyAssociatedToBoth: number;
+    alreadyAssociatedToAll: number;
     newlyAssociatedToExchange: number;
-    newlyAssociatedToAdapter: number;
+    newlyAssociatedToAdapterV2: number;
+    newlyAssociatedToAdapterV1: number;
     failed: number;
   };
 }
@@ -63,9 +66,10 @@ export function useEnsureTokensAssociated() {
       // Log results for debugging
       console.log('Token association results:', {
         total: summary.total,
-        alreadyAssociatedToBoth: summary.alreadyAssociatedToBoth,
+        alreadyAssociatedToAll: summary.alreadyAssociatedToAll,
         newlyAssociatedToExchange: summary.newlyAssociatedToExchange,
-        newlyAssociatedToAdapter: summary.newlyAssociatedToAdapter,
+        newlyAssociatedToAdapterV2: summary.newlyAssociatedToAdapterV2,
+        newlyAssociatedToAdapterV1: summary.newlyAssociatedToAdapterV1,
         failed: summary.failed,
       });
 
@@ -73,16 +77,22 @@ export function useEnsureTokensAssociated() {
         console.log(`✅ Associated ${summary.newlyAssociatedToExchange} token(s) to Exchange`);
       }
 
-      if (summary.newlyAssociatedToAdapter > 0) {
-        console.log(`✅ Associated ${summary.newlyAssociatedToAdapter} token(s) to Adapter`);
+      if (summary.newlyAssociatedToAdapterV2 > 0) {
+        console.log(`✅ Associated ${summary.newlyAssociatedToAdapterV2} token(s) to Adapter V2`);
       }
 
-      if (summary.alreadyAssociatedToBoth > 0) {
-        console.log(`ℹ️ ${summary.alreadyAssociatedToBoth} token(s) already associated to both contracts`);
+      if (summary.newlyAssociatedToAdapterV1 > 0) {
+        console.log(`✅ Associated ${summary.newlyAssociatedToAdapterV1} token(s) to Adapter V1`);
+      }
+
+      if (summary.alreadyAssociatedToAll > 0) {
+        console.log(`ℹ️ ${summary.alreadyAssociatedToAll} token(s) already associated to all contracts`);
       }
 
       if (!success) {
-        const failedTokens = results.filter(r => !r.associatedToExchange || !r.associatedToAdapter);
+        const failedTokens = results.filter(r =>
+          !r.associatedToExchange || !r.associatedToAdapterV2 || !r.associatedToAdapterV1
+        );
         const errorMsg = `Failed to associate tokens: ${failedTokens.map(t => t.tokenId).join(', ')}`;
         setError(errorMsg);
         console.error(errorMsg, failedTokens);

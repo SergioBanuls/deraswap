@@ -166,13 +166,20 @@ export function useSwapExecution() {
                 // DEBUG: Log token addresses
                 console.log('🔍 DEBUG fromToken:', {
                     address: params.fromToken.address,
+                    solidityAddress: params.fromToken.solidityAddress,
                     symbol: params.fromToken.symbol,
                     name: params.fromToken.name,
                 })
                 console.log('🔍 DEBUG toToken:', {
                     address: params.toToken.address,
+                    solidityAddress: params.toToken.solidityAddress,
                     symbol: params.toToken.symbol,
                     name: params.toToken.name,
+                })
+                console.log('🔍 DEBUG route path/route:', {
+                    path: params.route.path,
+                    route: params.route.route,
+                    aggregatorId: params.route.aggregatorId,
                 })
 
                 const txParams: SwapTransactionParams = {
@@ -187,10 +194,10 @@ export function useSwapExecution() {
                     )
                 }
 
-                // Step 2: Ensure adapter has ALL tokens associated (backend check)
+                // Step 2: Ensure Exchange and ALL Adapters (V1 + V2) have tokens associated
                 // This includes fromToken, toToken, AND all intermediate tokens in the path
                 // IMPORTANT: This fixes the "Safe token transfer failed!" error that occurs
-                // when intermediate tokens in multi-hop swaps are not associated
+                // when intermediate tokens in multi-hop swaps are not associated to the adapter
                 updateState('ensuring_adapter_tokens')
 
                 // Extract ALL tokens from the route path (V1 and V2 compatible)
@@ -218,23 +225,24 @@ export function useSwapExecution() {
                     '🔍 All tokens to check for adapter association:',
                     uniqueTokens
                 )
+                console.log('🔍 Expected token address for toToken:', params.toToken.address)
 
                 if (uniqueTokens.length > 0) {
                     console.log(
-                        '🔍 Checking adapter token associations for',
+                        '🔍 Checking Exchange and Adapters token associations for',
                         uniqueTokens.length,
                         'token(s)'
                     )
-                    const adapterReady = await ensureTokensAssociated(
+                    const allContractsReady = await ensureTokensAssociated(
                         uniqueTokens
                     )
 
-                    if (!adapterReady) {
+                    if (!allContractsReady) {
                         throw new Error(
-                            'Failed to ensure adapter supports these tokens. Please try again.'
+                            'Failed to ensure Exchange and Adapters support these tokens. Please try again.'
                         )
                     }
-                    console.log('✅ All adapter tokens verified (including intermediates)')
+                    console.log('✅ All tokens verified in Exchange and ALL Adapters (V1 + V2, including intermediates)')
                 }
 
                 // Step 3: Check token association for destination token (skip for HBAR)
