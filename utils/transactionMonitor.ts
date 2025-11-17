@@ -32,6 +32,7 @@ export interface MirrorNodeTransaction {
     result: string
     name: string
     charged_tx_fee: number
+    error_message?: string | null
 }
 
 /**
@@ -175,10 +176,21 @@ export async function monitorTransaction(
                 // Transaction found in Mirror Node
                 const success = isSuccessResult(tx.result)
 
+                // Build detailed error message if available
+                let errorMessage: string | undefined
+                if (!success) {
+                    if (tx.error_message) {
+                        errorMessage = `${tx.result}: ${tx.error_message}`
+                    } else {
+                        errorMessage = `Transaction failed with status: ${tx.result}`
+                    }
+                }
+
                 console.log(`✅ Transaction confirmed:`, {
                     status: tx.result,
                     success,
                     consensusTimestamp: tx.consensus_timestamp,
+                    errorMessage: tx.error_message,
                 })
 
                 return {
@@ -186,9 +198,7 @@ export async function monitorTransaction(
                     status: success ? 'success' : 'failed',
                     consensusTimestamp: tx.consensus_timestamp,
                     result: tx.result,
-                    errorMessage: success
-                        ? undefined
-                        : `Transaction failed with status: ${tx.result}`,
+                    errorMessage,
                     transactionId,
                 }
             }
@@ -250,14 +260,22 @@ export async function getTransactionStatus(
 
         const success = isSuccessResult(tx.result)
 
+        // Build detailed error message if available
+        let errorMessage: string | undefined
+        if (!success) {
+            if (tx.error_message) {
+                errorMessage = `${tx.result}: ${tx.error_message}`
+            } else {
+                errorMessage = `Transaction failed with status: ${tx.result}`
+            }
+        }
+
         return {
             success,
             status: success ? 'success' : 'failed',
             consensusTimestamp: tx.consensus_timestamp,
             result: tx.result,
-            errorMessage: success
-                ? undefined
-                : `Transaction failed with status: ${tx.result}`,
+            errorMessage,
             transactionId,
         }
     } catch (error) {

@@ -6,9 +6,11 @@ interface TokenAssociationResult {
   alreadyAssociatedToExchange: boolean;
   alreadyAssociatedToAdapterV2: boolean;
   alreadyAssociatedToAdapterV1: boolean;
+  alreadyAssociatedToFeeWallet: boolean;
   associatedToExchange: boolean;
   associatedToAdapterV2: boolean;
   associatedToAdapterV1: boolean;
+  associatedToFeeWallet: boolean;
   error?: string;
 }
 
@@ -21,6 +23,7 @@ interface EnsureTokensResponse {
     newlyAssociatedToExchange: number;
     newlyAssociatedToAdapterV2: number;
     newlyAssociatedToAdapterV1: number;
+    newlyAssociatedToFeeWallet: number;
     failed: number;
   };
 }
@@ -33,10 +36,12 @@ export function useEnsureTokensAssociated() {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Ensures tokens are associated to BOTH Exchange and Adapter before swap
-   * Returns true if all tokens are successfully associated to both contracts
+   * Ensures tokens are associated to Exchange, Adapters, and Fee Wallet before swap
+   * Returns true if all tokens are successfully associated to all contracts
+   * @param tokenIds - All tokens in the swap route
+   * @param tokenFrom - The input token (only this needs fee wallet association)
    */
-  const ensureTokensAssociated = async (tokenIds: string[]): Promise<boolean> => {
+  const ensureTokensAssociated = async (tokenIds: string[], tokenFrom?: string): Promise<boolean> => {
     if (!tokenIds || tokenIds.length === 0) {
       return true; // No tokens to check
     }
@@ -57,7 +62,10 @@ export function useEnsureTokensAssociated() {
     try {
       const response = await axios.post<EnsureTokensResponse>(
         '/api/ensure-tokens-associated',
-        { tokenIds: tokensToCheck },
+        {
+          tokenIds: tokensToCheck,
+          tokenFrom: tokenFrom // Pass tokenFrom for fee wallet association
+        },
         { timeout: 120000 } // 2 minute timeout (allows up to 12 tokens @ 10s each)
       );
 
@@ -85,13 +93,17 @@ export function useEnsureTokensAssociated() {
         console.log(`✅ Associated ${summary.newlyAssociatedToAdapterV1} token(s) to Adapter V1`);
       }
 
+      if (summary.newlyAssociatedToFeeWallet > 0) {
+        console.log(`✅ Associated ${summary.newlyAssociatedToFeeWallet} token(s) to Fee Wallet`);
+      }
+
       if (summary.alreadyAssociatedToAll > 0) {
         console.log(`ℹ️ ${summary.alreadyAssociatedToAll} token(s) already associated to all contracts`);
       }
 
       if (!success) {
         const failedTokens = results.filter(r =>
-          !r.associatedToExchange || !r.associatedToAdapterV2 || !r.associatedToAdapterV1
+          !r.associatedToExchange || !r.associatedToAdapterV2 || !r.associatedToAdapterV1 || !r.associatedToFeeWallet
         );
         const errorMsg = `Failed to associate tokens: ${failedTokens.map(t => t.tokenId).join(', ')}`;
         setError(errorMsg);

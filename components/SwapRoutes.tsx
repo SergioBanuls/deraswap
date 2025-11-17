@@ -466,6 +466,25 @@ export const SwapRoutes = memo(function SwapRoutes({
                                     </div>
                                 )}
 
+                                {/* High Price Impact Warning - Only for negative impact */}
+                                {route.priceImpact < -10 && (
+                                    <div className='mb-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30'>
+                                        <div className='flex items-start gap-2'>
+                                            <span className='text-yellow-500 text-lg'>⚠️</span>
+                                            <div className='flex-1'>
+                                                <div className='text-yellow-500 text-xs font-semibold mb-1'>
+                                                    High Price Impact Warning
+                                                </div>
+                                                <div className='text-yellow-500/90 text-xs'>
+                                                    This swap has a negative price impact of {Math.abs(route.priceImpact).toFixed(2)}%.
+                                                    {route.priceImpact < -15 && ' This is extremely high and may result in significant loss.'}
+                                                    {route.priceImpact >= -15 && ' Consider splitting this into smaller trades or waiting for better liquidity.'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Token Icon and Output Amount */}
                                 <div className='flex items-start justify-between mb-3'>
                                     <div className='flex items-center gap-3'>

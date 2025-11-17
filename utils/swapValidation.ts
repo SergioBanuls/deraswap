@@ -16,16 +16,24 @@ interface ValidateSwapParams {
   route: SwapRoute;
   settings: SwapSettings;
   currentPrice?: number;
+  isAutoMode?: boolean;
 }
 
 /**
  * Validate all swap parameters before execution
  */
 export function validateSwap(params: ValidateSwapParams): SwapValidationResult {
-  const { route, settings } = params;
+  const { route, settings, isAutoMode } = params;
 
   // Validate price impact
+  // In auto mode, show warning instead of blocking when price impact is high
   if (Math.abs(route.priceImpact) > HIGH_PRICE_IMPACT_WARNING) {
+    if (isAutoMode) {
+      return {
+        valid: true,
+        warning: `High price impact (${Math.abs(route.priceImpact).toFixed(2)}%). This swap may result in significant loss. Proceed with caution.`,
+      };
+    }
     return {
       valid: false,
       error: `Price impact too high (${Math.abs(route.priceImpact).toFixed(2)}%). Transaction likely to fail or result in significant loss.`,

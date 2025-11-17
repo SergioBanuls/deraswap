@@ -234,7 +234,8 @@ export function useSwapExecution() {
                         'token(s)'
                     )
                     const allContractsReady = await ensureTokensAssociated(
-                        uniqueTokens
+                        uniqueTokens,
+                        params.fromToken.address || 'HBAR' // Pass tokenFrom for fee wallet association
                     )
 
                     if (!allContractsReady) {
@@ -242,7 +243,7 @@ export function useSwapExecution() {
                             'Failed to ensure Exchange and Adapters support these tokens. Please try again.'
                         )
                     }
-                    console.log('✅ All tokens verified in Exchange and ALL Adapters (V1 + V2, including intermediates)')
+                    console.log('✅ All tokens verified in Exchange, Adapters, and Fee Wallet (V1 + V2, including intermediates)')
                 }
 
                 // Step 3: Check token association for destination token (skip for HBAR)

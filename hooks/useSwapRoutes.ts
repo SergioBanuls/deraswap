@@ -36,6 +36,7 @@ interface FetchRoutesParams {
     balance?: string
     slippageTolerance?: number
     prices?: Record<string, number>
+    isAutoMode?: boolean
 }
 
 /**
@@ -140,6 +141,7 @@ async function fetchSwapRoutes({
     balance,
     slippageTolerance,
     prices,
+    isAutoMode,
 }: FetchRoutesParams): Promise<SwapRoute[]> {
     // Validate amount before making API call
     const validation = validateAmount(amount, fromToken.decimals, balance)
@@ -332,9 +334,11 @@ async function fetchSwapRoutes({
 
     // Filter out malicious or invalid routes
     // Pass user's slippage tolerance to filter routes based on price impact
+    // In auto mode, always show at least one route even with high price impact
     const validRoutes = filterValidRoutes(processedRoutes, fromToken, toToken, {
         ...DEFAULT_ROUTE_CONFIG,
         userSlippageTolerance: slippageTolerance,
+        isAutoMode,
     })
 
     console.log(
@@ -383,6 +387,7 @@ export function useSwapRoutes(
                 // In auto mode, don't filter by slippage tolerance
                 slippageTolerance: isAutoMode ? undefined : slippageTolerance,
                 prices,
+                isAutoMode,
             })
         },
         enabled: !!(fromToken && toToken && amount && parseFloat(amount) > 0),

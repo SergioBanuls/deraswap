@@ -15,6 +15,7 @@ export interface RouteValidationConfig {
   maxHops: number;
   maxPriceImpact: number;
   userSlippageTolerance?: number; // User's selected slippage tolerance
+  isAutoMode?: boolean; // If true, always show at least one route even with high price impact
 }
 
 /**
@@ -135,24 +136,28 @@ export function validateRoute(
   }
 
   // 3. Validate price impact is reasonable
-  // First check against absolute maximum (20%)
-  if (Math.abs(route.priceImpact) > config.maxPriceImpact) {
-    return {
-      valid: false,
-      reason: `Price impact too high: ${Math.abs(route.priceImpact).toFixed(2)}% (max: ${config.maxPriceImpact}%)`,
-    };
-  }
-
-  // Then check against user's slippage tolerance if provided
-  // Note: Negative price impact means you're getting MORE than expected (good)
-  // Only reject if price impact is negative (bad) and exceeds tolerance
-  if (config.userSlippageTolerance !== undefined && route.priceImpact < 0) {
-    const absolutePriceImpact = Math.abs(route.priceImpact);
-    if (absolutePriceImpact > config.userSlippageTolerance) {
+  // In auto mode, we don't reject routes based on price impact
+  // We'll show at least one route with a warning instead
+  if (!config.isAutoMode) {
+    // First check against absolute maximum (20%)
+    if (Math.abs(route.priceImpact) > config.maxPriceImpact) {
       return {
         valid: false,
-        reason: `Price impact (${absolutePriceImpact.toFixed(2)}%) exceeds your slippage tolerance (${config.userSlippageTolerance}%)`,
+        reason: `Price impact too high: ${Math.abs(route.priceImpact).toFixed(2)}% (max: ${config.maxPriceImpact}%)`,
       };
+    }
+
+    // Then check against user's slippage tolerance if provided
+    // Note: Negative price impact means you're getting MORE than expected (good)
+    // Only reject if price impact is negative (bad) and exceeds tolerance
+    if (config.userSlippageTolerance !== undefined && route.priceImpact < 0) {
+      const absolutePriceImpact = Math.abs(route.priceImpact);
+      if (absolutePriceImpact > config.userSlippageTolerance) {
+        return {
+          valid: false,
+          reason: `Price impact (${absolutePriceImpact.toFixed(2)}%) exceeds your slippage tolerance (${config.userSlippageTolerance}%)`,
+        };
+      }
     }
   }
 
@@ -234,6 +239,17 @@ export function filterValidRoutes(
       results.push(route);
     }
   });
+
+  // In auto mode, always return at least one route (the best available)
+  if (config?.isAutoMode && results.length === 0 && routes.length > 0) {
+    const bestRoute = routes[0];
+    console.warn('⚠️ Auto mode: Showing best route despite high price impact:', {
+      aggregator: bestRoute.aggregatorId,
+      output: bestRoute.outputAmountFormatted,
+      priceImpact: bestRoute.priceImpact.toFixed(2) + '%'
+    });
+    results.push(bestRoute);
+  }
 
   return results;
 }
