@@ -43,7 +43,7 @@ import {
 } from '@/utils/transactionMonitor'
 import { parseHederaError, formatErrorMessage } from '@/utils/errorMessages'
 import { useEnsureTokensAssociated } from '@/hooks/useEnsureTokensAssociated'
-import { extractTokensFromPath, evmAddressToTokenId } from '@/utils/pathUtils'
+import { extractAllTokensFromRoute } from '@/utils/pathUtils'
 
 export interface SwapExecutionParams {
     route: SwapRoute
@@ -187,31 +187,46 @@ export function useSwapExecution() {
                     )
                 }
 
-                // Step 2: Ensure adapter has fromToken and toToken associated (backend check)
-                // NOTE: We do NOT extract intermediate tokens from the path because:
-                // 1. ETASwap path format is NOT standard Uniswap V3 (token+fee+token)
-                // 2. Intermediate tokens might be pool addresses, not HTS tokens
-                // 3. The adapter handles path resolution internally
+                // Step 2: Ensure adapter has ALL tokens associated (backend check)
+                // This includes fromToken, toToken, AND all intermediate tokens in the path
+                // IMPORTANT: This fixes the "Safe token transfer failed!" error that occurs
+                // when intermediate tokens in multi-hop swaps are not associated
                 updateState('ensuring_adapter_tokens')
 
+                // Extract ALL tokens from the route path (V1 and V2 compatible)
+                const pathTokens = extractAllTokensFromRoute(
+                    params.route,
+                    params.route.aggregatorId
+                )
+
+                console.log('🔍 Tokens extracted from path:', pathTokens)
+
+                // Also add fromToken and toToken explicitly (they should already be in path, but be safe)
                 const tokensToCheck: string[] = []
                 if (params.fromToken.address !== '')
                     tokensToCheck.push(params.fromToken.address)
                 if (params.toToken.address !== '')
                     tokensToCheck.push(params.toToken.address)
 
+                // Add all path tokens
+                tokensToCheck.push(...pathTokens)
+
+                // Remove duplicates
+                const uniqueTokens = Array.from(new Set(tokensToCheck))
+
                 console.log(
-                    '🔍 Tokens to check for adapter association:',
-                    tokensToCheck
+                    '🔍 All tokens to check for adapter association:',
+                    uniqueTokens
                 )
 
-                if (tokensToCheck.length > 0) {
+                if (uniqueTokens.length > 0) {
                     console.log(
-                        '🔍 Checking adapter token associations:',
-                        tokensToCheck
+                        '🔍 Checking adapter token associations for',
+                        uniqueTokens.length,
+                        'token(s)'
                     )
                     const adapterReady = await ensureTokensAssociated(
-                        tokensToCheck
+                        uniqueTokens
                     )
 
                     if (!adapterReady) {
@@ -219,7 +234,7 @@ export function useSwapExecution() {
                             'Failed to ensure adapter supports these tokens. Please try again.'
                         )
                     }
-                    console.log('✅ Adapter tokens verified')
+                    console.log('✅ All adapter tokens verified (including intermediates)')
                 }
 
                 // Step 3: Check token association for destination token (skip for HBAR)
