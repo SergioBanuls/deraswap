@@ -64,8 +64,6 @@ export interface SwapExecutionState {
 
 export type SwapStep =
     | 'idle'
-    | 'validating'
-    | 'ensuring_adapter_tokens'
     | 'checking_association'
     | 'requesting_association'
     | 'checking_allowance'
@@ -79,8 +77,6 @@ export type SwapStep =
 
 const STEP_MESSAGES: Record<SwapStep, string> = {
     idle: 'Ready to swap',
-    validating: 'Validating swap parameters...',
-    ensuring_adapter_tokens: 'Ensuring adapter supports tokens...',
     checking_association: 'Checking token association...',
     requesting_association: 'Requesting token association...',
     checking_allowance: 'Checking token allowance...',
@@ -160,9 +156,7 @@ export function useSwapExecution() {
             }
 
             try {
-                // Step 1: Validate parameters
-                updateState('validating')
-
+                // Step 1: Validate parameters (silently)
                 // DEBUG: Log token addresses
                 console.log('🔍 DEBUG fromToken:', {
                     address: params.fromToken.address,
@@ -194,11 +188,10 @@ export function useSwapExecution() {
                     )
                 }
 
-                // Step 2: Ensure Exchange and ALL Adapters (V1 + V2) have tokens associated
+                // Step 2: Ensure Exchange and ALL Adapters (V1 + V2) have tokens associated (silently)
                 // This includes fromToken, toToken, AND all intermediate tokens in the path
                 // IMPORTANT: This fixes the "Safe token transfer failed!" error that occurs
                 // when intermediate tokens in multi-hop swaps are not associated to the adapter
-                updateState('ensuring_adapter_tokens')
 
                 // Extract ALL tokens from the route path (V1 and V2 compatible)
                 const pathTokens = extractAllTokensFromRoute(
