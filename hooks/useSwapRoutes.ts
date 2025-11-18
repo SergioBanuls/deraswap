@@ -365,6 +365,18 @@ export function useSwapRoutes(
 ) {
     const queryClient = useQueryClient()
 
+    // Check if balance is sufficient before making API call
+    const hasSufficientBalance = (() => {
+        if (!balance || !fromToken || !amount) return true // If no balance info, let the query proceed
+        
+        try {
+            const validation = validateAmount(amount, fromToken.decimals, balance)
+            return validation.valid // Only true if balance is sufficient
+        } catch {
+            return false // Invalid amount or insufficient balance
+        }
+    })()
+
     return useQuery({
         queryKey: [
             'swapRoutes',
@@ -390,7 +402,13 @@ export function useSwapRoutes(
                 isAutoMode,
             })
         },
-        enabled: !!(fromToken && toToken && amount && parseFloat(amount) > 0),
+        enabled: !!(
+            fromToken && 
+            toToken && 
+            amount && 
+            parseFloat(amount) > 0 && 
+            hasSufficientBalance // Don't fetch routes if insufficient balance
+        ),
         staleTime: 30 * 1000, // 30s
         gcTime: 5 * 60 * 1000, // 5min
         refetchOnWindowFocus: true,

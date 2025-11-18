@@ -191,7 +191,7 @@ export const SwapHistory = memo(function SwapHistory({
                                     <div className='flex items-center justify-between gap-4'>
                                         {/* From Token */}
                                         <div className='flex items-center gap-3 flex-1'>
-                                            {fromToken?.icon ? (
+                                            {fromToken?.icon && fromToken.icon.trim() !== '' ? (
                                                 <Image
                                                     src={fromToken.icon}
                                                     alt={fromToken.symbol}
@@ -238,7 +238,7 @@ export const SwapHistory = memo(function SwapHistory({
                                                     )}
                                                 </span>
                                             </div>
-                                            {toToken?.icon ? (
+                                            {toToken?.icon && toToken.icon.trim() !== '' ? (
                                                 <Image
                                                     src={toToken.icon}
                                                     alt={toToken.symbol}

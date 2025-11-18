@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { SwapCard } from '@/components/SwapCard'
 import { SwapRoutes } from '@/components/SwapRoutes'
@@ -15,7 +15,7 @@ import { useTokens } from '@/hooks/useTokens'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 import { useReownConnect } from '@/hooks/useReownConnect'
 
-export default function Home() {
+function HomeContent() {
     const [fromToken, setFromToken] = useState<Token | null>(null)
     const [toToken, setToToken] = useState<Token | null>(null)
     const [amount, setAmount] = useState('')
@@ -176,9 +176,10 @@ export default function Home() {
             fromToken !== null &&
             toToken !== null &&
             amount !== '' &&
-            parseFloat(amount) > 0
+            parseFloat(amount) > 0 &&
+            !hasBalanceError // Don't show routes if insufficient balance
         )
-    }, [fromToken, toToken, amount])
+    }, [fromToken, toToken, amount, hasBalanceError])
 
     // Memoize handler functions
     const handleSwapTokens = useCallback(() => {
@@ -315,6 +316,7 @@ export default function Home() {
                                 fromToken={fromToken}
                                 toToken={toToken}
                                 amount={debouncedAmount}
+                                balance={fromTokenBalance}
                                 slippageTolerance={effectiveSlippage}
                                 autoSlippage={settings.autoSlippage}
                                 onRouteSelect={setSelectedRoute}
@@ -324,5 +326,13 @@ export default function Home() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function Home() {
+    return (
+        <Suspense fallback={<div className='flex items-center justify-center mt-36 w-full'><div className='max-w-md w-full px-4'><div className='animate-pulse bg-gray-800 rounded-2xl h-96' /></div></div>}>
+            <HomeContent />
+        </Suspense>
     )
 }

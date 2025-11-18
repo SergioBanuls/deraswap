@@ -217,13 +217,11 @@ export function SwapProgressDialog({
                                         You received
                                     </p>
                                     <div className='flex items-center justify-center gap-3'>
-                                        {receivedToken.icon && (
-                                            <img
-                                                src={receivedToken.icon}
-                                                alt={receivedToken.symbol}
-                                                className='w-8 h-8 rounded-full'
-                                            />
-                                        )}
+                                        <img
+                                            src={receivedToken.icon && receivedToken.icon.trim() !== '' ? receivedToken.icon : '/NotFound.png'}
+                                            alt={receivedToken.symbol}
+                                            className='w-8 h-8 rounded-full'
+                                        />
                                         <div className='flex items-baseline gap-2'>
                                             <span className='text-3xl font-bold text-white'>
                                                 {receivedAmount}

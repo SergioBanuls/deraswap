@@ -281,6 +281,18 @@ export const SwapCard = memo(function SwapCard({
                         />
                     </div>
 
+                    {/* BSL Token Warning */}
+                    {(fromToken?.symbol === 'BSL' || toToken?.symbol === 'BSL') && (
+                        <div className='mt-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30'>
+                            <div className='flex items-start gap-2'>
+                                <span className='text-yellow-500 text-base shrink-0'>ⓘ</span>
+                                <div className='text-yellow-500/90 text-xs'>
+                                    You're exchanging tokens, which has custom fees on token side. Transaction may fail or it can affect output amount.
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Connect Wallet / Associate Token / Swap Button */}
                     <div className='mt-6'>
                         {!isConnected ? (

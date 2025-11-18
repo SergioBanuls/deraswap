@@ -22,6 +22,7 @@ interface SwapRoutesProps {
     fromToken: Token | null
     toToken: Token | null
     amount: string
+    balance?: string // Balance of the from token in raw units
     slippageTolerance: number
     autoSlippage?: boolean
     onRouteSelect?: (route: SwapRoute) => void
@@ -75,6 +76,7 @@ export const SwapRoutes = memo(function SwapRoutes({
     fromToken,
     toToken,
     amount,
+    balance,
     slippageTolerance,
     autoSlippage,
     onRouteSelect,
@@ -89,7 +91,7 @@ export const SwapRoutes = memo(function SwapRoutes({
         fromToken,
         toToken,
         amount,
-        undefined,
+        balance,
         slippageTolerance,
         autoSlippage
     )

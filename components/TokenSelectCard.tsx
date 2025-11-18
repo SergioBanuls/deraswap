@@ -81,7 +81,7 @@ const TokenRow = memo(function TokenRow({
         >
             <div className='relative w-10 h-10 rounded-full overflow-hidden bg-white/10 shrink-0'>
                 <Image
-                    src={token?.icon || '/NotFound.png'}
+                    src={token?.icon && token.icon.trim() !== '' ? token.icon : '/NotFound.png'}
                     alt={token.symbol}
                     fill
                     className='object-cover'
@@ -277,7 +277,7 @@ export function TokenSelectCard({
                             >
                                 <div className='relative w-6 h-6 rounded-full overflow-hidden bg-white/10 shrink-0'>
                                     <Image
-                                        src={token.icon}
+                                        src={token.icon && token.icon.trim() !== '' ? token.icon : '/NotFound.png'}
                                         alt={token.symbol}
                                         fill
                                         className='object-cover'
