@@ -59,7 +59,7 @@ export function validateSwap(params: ValidateSwapParams): SwapValidationResult {
   if (settings.slippageTolerance > HIGH_SLIPPAGE_WARNING) {
     return {
       valid: true,
-      warning: `High slippage tolerance (${settings.slippageTolerance}%). Your transaction may be front-run.`,
+      warning: `High slippage tolerance (${settings.slippageTolerance}%).`,
     };
   }
 
@@ -111,7 +111,7 @@ export function validateSlippage(slippage: number): SwapValidationResult {
   if (slippage > HIGH_SLIPPAGE_WARNING) {
     return {
       valid: true,
-      warning: `High slippage (${slippage}%). Risk of front-running.`,
+      warning: `High slippage (${slippage}%).`,
     };
   }
 

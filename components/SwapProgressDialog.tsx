@@ -9,9 +9,7 @@ import {
     Loader2,
     XCircle,
     ExternalLink,
-    ArrowRight,
     Circle,
-    AlertCircle,
 } from 'lucide-react'
 
 // Define all swap process steps in order (simplified view)
@@ -21,14 +19,9 @@ const SWAP_PROCESS_STEPS: Array<{
     description: string
 }> = [
     {
-        keys: ['validating'],
-        label: 'Validating',
-        description: 'Validating swap parameters',
-    },
-    {
-        keys: ['ensuring_adapter_tokens'],
-        label: 'Preparing Adapters',
-        description: 'Ensuring adapter supports tokens',
+        keys: ['building_transaction'],
+        label: 'Building Transaction',
+        description: 'Preparing swap transaction',
     },
     {
         keys: [
@@ -41,19 +34,9 @@ const SWAP_PROCESS_STEPS: Array<{
         description: 'Checking association and allowances',
     },
     {
-        keys: ['building_transaction'],
-        label: 'Building Transaction',
-        description: 'Preparing swap transaction',
-    },
-    {
         keys: ['awaiting_signature'],
         label: 'Sign Transaction',
         description: 'Waiting for wallet signature',
-    },
-    {
-        keys: ['sending_transaction'],
-        label: 'Sending Transaction',
-        description: 'Broadcasting to network',
     },
     {
         keys: ['monitoring'],
@@ -77,7 +60,7 @@ function ProcessStep({ label, description, status, isLast }: ProcessStepProps) {
             {/* Icon column */}
             <div className='flex flex-col items-center'>
                 {/* Icon */}
-                <div className='relative flex-shrink-0'>
+                <div className='relative'>
                     {status === 'completed' && (
                         <div className='relative'>
                             <div className='absolute inset-0 bg-green-500/20 rounded-full blur-sm' />
@@ -116,7 +99,7 @@ function ProcessStep({ label, description, status, isLast }: ProcessStepProps) {
             </div>
 
             {/* Content */}
-            <div className='flex-1 pb-8'>
+            <div className='flex-1'>
                 <div
                     className={`font-medium transition-colors duration-200 ${
                         status === 'completed'
@@ -224,13 +207,13 @@ export function SwapProgressDialog({
 
                         <div className='space-y-2'>
                             <h3 className='text-2xl font-bold text-white'>
-                                Swap Complete!
+                                Swap Completed
                             </h3>
 
                             {/* Received Amount Display */}
                             {receivedAmount && receivedToken && (
-                                <div className='py-4'>
-                                    <p className='text-sm text-neutral-500 mb-2'>
+                                <div className='py-2'>
+                                    <p className='text-sm text-neutral-500 mb-1'>
                                         You received
                                     </p>
                                     <div className='flex items-center justify-center gap-3'>
@@ -252,23 +235,7 @@ export function SwapProgressDialog({
                                     </div>
                                 </div>
                             )}
-
-                            <p className='text-neutral-400 text-sm'>
-                                Your transaction has been confirmed on the
-                                network
-                            </p>
                         </div>
-
-                        {txHash && (
-                            <div className='bg-neutral-800/50 rounded-xl p-4 space-y-2'>
-                                <p className='text-xs text-neutral-500 uppercase tracking-wide'>
-                                    Transaction ID
-                                </p>
-                                <p className='text-xs font-mono text-neutral-300 break-all leading-relaxed'>
-                                    {txHash}
-                                </p>
-                            </div>
-                        )}
 
                         <div className='space-y-3 pt-2'>
                             {explorerUrl && (
@@ -380,11 +347,8 @@ export function SwapProgressDialog({
                         {/* Header */}
                         <div className='text-center space-y-2'>
                             <h3 className='text-xl font-semibold text-white'>
-                                Processing Swap
+                                Complete the Swap
                             </h3>
-                            <p className='text-sm text-neutral-400'>
-                                Please wait while we process your transaction
-                            </p>
                         </div>
 
                         {/* Process Steps */}
@@ -418,43 +382,6 @@ export function SwapProgressDialog({
                                     />
                                 )
                             })}
-                        </div>
-
-                        {/* Monitoring Progress */}
-                        {currentStep === 'monitoring' && monitoringProgress && (
-                            <div className='bg-blue-500/10 border border-blue-500/20 rounded-xl p-4'>
-                                <div className='flex items-center justify-center gap-3'>
-                                    <div className='flex gap-1'>
-                                        {Array.from({
-                                            length: monitoringProgress.max,
-                                        }).map((_, i) => (
-                                            <div
-                                                key={i}
-                                                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                                    i <
-                                                    monitoringProgress.current
-                                                        ? 'bg-blue-500 scale-100'
-                                                        : 'bg-neutral-700 scale-75'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                    <span className='text-xs text-blue-400 font-medium'>
-                                        {monitoringProgress.current}/
-                                        {monitoringProgress.max} confirmations
-                                    </span>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Info message */}
-                        <div className='bg-neutral-800/50 rounded-xl p-3 border border-neutral-700/50'>
-                            <div className='flex items-center justify-center gap-2'>
-                                <AlertCircle className='w-4 h-4 text-neutral-500' />
-                                <p className='text-xs text-neutral-400'>
-                                    Don't close this window during processing
-                                </p>
-                            </div>
                         </div>
                     </div>
                 )}

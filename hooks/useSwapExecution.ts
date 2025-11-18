@@ -70,7 +70,6 @@ export type SwapStep =
     | 'requesting_approval'
     | 'building_transaction'
     | 'awaiting_signature'
-    | 'sending_transaction'
     | 'monitoring'
     | 'success'
     | 'error'
@@ -81,9 +80,8 @@ const STEP_MESSAGES: Record<SwapStep, string> = {
     requesting_association: 'Requesting token association...',
     checking_allowance: 'Checking token allowance...',
     requesting_approval: 'Requesting token approval...',
-    building_transaction: 'Building swap transaction...',
+    building_transaction: 'Preparing swap transaction...',
     awaiting_signature: 'Please sign the transaction in your wallet...',
-    sending_transaction: 'Sending transaction to network...',
     monitoring: 'Monitoring transaction...',
     success: 'Swap completed successfully!',
     error: 'Swap failed',
@@ -156,7 +154,10 @@ export function useSwapExecution() {
             }
 
             try {
-                // Step 1: Validate parameters (silently)
+                // Show building transaction immediately when dialog opens
+                updateState('building_transaction')
+                
+                // Step 1: Validate parameters
                 // DEBUG: Log token addresses
                 console.log('🔍 DEBUG fromToken:', {
                     address: params.fromToken.address,
@@ -188,7 +189,7 @@ export function useSwapExecution() {
                     )
                 }
 
-                // Step 2: Ensure Exchange and ALL Adapters (V1 + V2) have tokens associated (silently)
+                // Step 2: Ensure Exchange and ALL Adapters (V1 + V2) have tokens associated
                 // This includes fromToken, toToken, AND all intermediate tokens in the path
                 // IMPORTANT: This fixes the "Safe token transfer failed!" error that occurs
                 // when intermediate tokens in multi-hop swaps are not associated to the adapter
@@ -360,8 +361,6 @@ export function useSwapExecution() {
                 }
 
                 // Step 5: Build swap transaction
-                updateState('building_transaction')
-
                 // CRITICAL: When swapping FROM HBAR, we MUST use signer
                 // to properly serialize the payableAmount field
                 const isHbarSwap = params.fromToken.address === ''

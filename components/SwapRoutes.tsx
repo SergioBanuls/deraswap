@@ -441,14 +441,6 @@ export const SwapRoutes = memo(function SwapRoutes({
                         // Format aggregator display
                         const routeNames = formatRouteName(route.aggregatorId)
 
-                        // Format transaction type for display
-                        const txTypeDisplay =
-                            route.transactionType === 'SPLIT_SWAP'
-                                ? 'Split Swap'
-                                : route.transactionType === 'INDIRECT_SWAP'
-                                ? 'Multi-hop'
-                                : 'Direct Swap'
-
                         return (
                             <div
                                 key={`${route.transactionType}-${index}`}
