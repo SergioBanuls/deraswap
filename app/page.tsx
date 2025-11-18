@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { SwapCard } from '@/components/SwapCard'
 import { SwapRoutes } from '@/components/SwapRoutes'
 import { SwapHistory } from '@/components/SwapHistory'
@@ -26,6 +27,11 @@ export default function Home() {
     const [tokenSelectType, setTokenSelectType] = useState<'from' | 'to'>(
         'from'
     )
+
+    // URL state management
+    const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
 
     // Get connected account
     const { account } = useReownConnect()
@@ -63,20 +69,100 @@ export default function Home() {
         getEffectiveSlippage,
     } = useSwapSettings()
 
-    // Set default tokens (HBAR new and USDC) on mount
+    // Initialize tokens from URL or set defaults on mount
     useEffect(() => {
         if (tokens && tokens.length > 0 && !fromToken && !toToken) {
-            // HBAR native (empty address) - so users can swap using HBAR directly
-            const hbarToken = tokens.find(
-                (t) => t.address === '' || t.symbol === 'HBAR'
-            )
-            // USDC token ID on Hedera
-            const usdcToken = tokens.find((t) => t.address === '0.0.456858')
+            // Check if we have tokens in URL
+            const fromParam = searchParams.get('from')
+            const toParam = searchParams.get('to')
 
-            if (hbarToken) setFromToken(hbarToken)
-            if (usdcToken) setToToken(usdcToken)
+            let initialFromToken: Token | null = null
+            let initialToToken: Token | null = null
+
+            // Try to find tokens from URL params
+            if (fromParam !== null) {
+                if (fromParam === 'HBAR') {
+                    // Find HBAR token by address or symbol
+                    initialFromToken =
+                        tokens.find(
+                            (t) => t.address === '' || t.symbol === 'HBAR'
+                        ) || null
+                } else {
+                    // Find token by address
+                    initialFromToken =
+                        tokens.find((t) => t.address === fromParam) || null
+                }
+            }
+            if (toParam !== null) {
+                if (toParam === 'HBAR') {
+                    // Find HBAR token by address or symbol
+                    initialToToken =
+                        tokens.find(
+                            (t) => t.address === '' || t.symbol === 'HBAR'
+                        ) || null
+                } else {
+                    // Find token by address
+                    initialToToken =
+                        tokens.find((t) => t.address === toParam) || null
+                }
+            }
+
+            // If URL params were provided and found, use them
+            if (initialFromToken || initialToToken) {
+                if (initialFromToken) setFromToken(initialFromToken)
+                if (initialToToken) setToToken(initialToToken)
+            } else {
+                // Otherwise, set defaults (HBAR and USDC)
+                const hbarToken = tokens.find(
+                    (t) => t.address === '' || t.symbol === 'HBAR'
+                )
+                const usdcToken = tokens.find(
+                    (t) => t.address === '0.0.456858'
+                )
+
+                if (hbarToken) setFromToken(hbarToken)
+                if (usdcToken) setToToken(usdcToken)
+            }
         }
-    }, [tokens, fromToken, toToken])
+    }, [tokens, fromToken, toToken, searchParams])
+
+    // Sync token changes to URL
+    useEffect(() => {
+        // Only update URL if tokens list is loaded (to avoid updating with stale state)
+        if (!tokens || tokens.length === 0) return
+
+        const params = new URLSearchParams(searchParams.toString())
+
+        // Update from token in URL
+        if (fromToken) {
+            // Use "HBAR" for empty address, otherwise use the actual address
+            const fromValue = fromToken.address === '' ? 'HBAR' : fromToken.address
+            params.set('from', fromValue)
+        } else {
+            params.delete('from')
+        }
+
+        // Update to token in URL
+        if (toToken) {
+            // Use "HBAR" for empty address, otherwise use the actual address
+            const toValue = toToken.address === '' ? 'HBAR' : toToken.address
+            params.set('to', toValue)
+        } else {
+            params.delete('to')
+        }
+
+        // Build new URL
+        const queryString = params.toString()
+        const newURL = queryString ? `${pathname}?${queryString}` : pathname
+
+        // Only update if the URL actually changed
+        const currentURL = `${pathname}${
+            searchParams.toString() ? `?${searchParams.toString()}` : ''
+        }`
+        if (newURL !== currentURL) {
+            router.push(newURL, { scroll: false })
+        }
+    }, [fromToken, toToken, tokens, pathname, router, searchParams])
 
     // Calculate effective slippage (auto or manual)
     const effectiveSlippage = getEffectiveSlippage(selectedRoute)
