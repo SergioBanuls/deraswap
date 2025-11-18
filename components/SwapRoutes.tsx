@@ -39,7 +39,7 @@ function formatGasCost(
     // gasEstimate is the estimated gas units
     // Each gas unit costs approximately 0.000000082 HBAR
     const approxCost1Gas = 0.000000082
-    const costInHbar = gasEstimate * approxCost1Gas
+    const costInHbar = gasEstimate * approxCost1Gas * (1 / hbarPrice)
 
     const hbar = `${costInHbar.toFixed(4)} HBAR`
 
