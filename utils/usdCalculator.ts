@@ -30,12 +30,12 @@ export function calculateSwapUsdValue(
 
     // Parse the amount (assumed to be in smallest units)
     const amountBigInt = BigInt(amount)
-    
+
     // Convert to decimal using token decimals
     // Formula: (amount / 10^decimals) * price
     const divisor = BigInt(10 ** token.decimals)
     const amountInTokens = Number(amountBigInt) / Number(divisor)
-    
+
     // Calculate USD value
     const usdValue = amountInTokens * price
 
@@ -92,16 +92,18 @@ export function calculateSwapUsdValuePrecise(
     }
 
     const price = tokenPrice || token.priceUsd || token.price || 0
-    
+
     // Use BigInt for precision
     const amountBigInt = BigInt(amount)
     const priceBigInt = BigInt(Math.floor(price * 1e8)) // Store price with 8 decimals
     const divisor = BigInt(10 ** token.decimals)
-    
+
     // Calculate: (amount * price) / (10^decimals * 10^8)
-    const usdValueBigInt = (amountBigInt * priceBigInt) / (divisor * BigInt(1e8))
-    
-    return Number(usdValueBigInt)
+    // Use scaling to preserve precision for small values (6 decimal places)
+    const PRECISION = BigInt(1000000)
+    const scaledValue = (amountBigInt * priceBigInt * PRECISION) / (divisor * BigInt(1e8))
+
+    return Number(scaledValue) / 1000000
   } catch (error) {
     console.error('Error calculating precise USD value:', error)
     return 0

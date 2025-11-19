@@ -14,32 +14,50 @@ import type { RecordSwapRequest, RecordSwapResponse } from '@/types/incentive'
 const INCENTIVE_THRESHOLD_USD = 10 // $10 USD threshold for NFT
 
 /**
- * Verify transaction on Hedera Mirror Node
+ * Normalize transaction ID format
+ * Converts "0.0.1234@1234567890.123456789" to "0.0.1234-1234567890-123456789"
+ */
+function normalizeTransactionId(txId: string): string {
+  if (txId.includes('@')) {
+    const [accountId, timestamp] = txId.split('@')
+    const [seconds, nanos] = timestamp.split('.')
+    return `${accountId}-${seconds}-${nanos}`
+  }
+  return txId
+}
+
+/**
+ * Verify transaction on Hedera Mirror Node (via Validation Cloud)
  * Returns the actual transaction data if valid, null if invalid
  */
 async function verifyTransactionOnMirrorNode(txHash: string, expectedWallet: string) {
   try {
-    const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'mainnet'
-    const mirrorNodeUrl = network === 'mainnet' 
-      ? 'https://mainnet-public.mirrornode.hedera.com'
-      : 'https://testnet.mirrornode.hedera.com'
+    const VALIDATION_CLOUD_BASE_URL = process.env.VALIDATION_CLOUD_BASE_URL || 'https://mainnet.hedera.validationcloud.io/v1'
+    const VALIDATION_CLOUD_API_KEY = process.env.VALIDATION_CLOUD_API_KEY
 
-    const response = await fetch(`${mirrorNodeUrl}/api/v1/transactions/${txHash}`)
-    
+    const baseUrlWithKey = VALIDATION_CLOUD_API_KEY
+      ? `${VALIDATION_CLOUD_BASE_URL}/${VALIDATION_CLOUD_API_KEY}`
+      : VALIDATION_CLOUD_BASE_URL
+
+    const normalizedTxId = normalizeTransactionId(txHash)
+    const url = `${baseUrlWithKey}/api/v1/transactions/${normalizedTxId}`
+
+    const response = await fetch(url)
+
     if (!response.ok) {
-      console.error(`Mirror node returned ${response.status} for tx ${txHash}`)
+      console.error(`Mirror node returned ${response.status} for tx ${txHash} (normalized: ${normalizedTxId})`)
       return null
     }
 
     const data = await response.json()
-    
+
     if (!data.transactions || data.transactions.length === 0) {
       console.error(`No transaction found for ${txHash}`)
       return null
     }
 
     const tx = data.transactions[0]
-    
+
     // Verify transaction was successful
     if (tx.result !== 'SUCCESS') {
       console.error(`Transaction ${txHash} was not successful: ${tx.result}`)
@@ -76,8 +94,8 @@ export async function POST(request: NextRequest) {
     if (
       !body.wallet_address ||
       !body.tx_hash ||
-      !body.from_token_address ||
-      !body.to_token_address ||
+      body.from_token_address === undefined ||
+      body.to_token_address === undefined ||
       !body.from_amount ||
       !body.to_amount ||
       body.usd_value === undefined ||
@@ -102,17 +120,17 @@ export async function POST(request: NextRequest) {
     // SECURITY: Verify transaction on Hedera Mirror Node
     // Can be disabled for development with SKIP_TX_VERIFICATION=true
     const skipVerification = process.env.SKIP_TX_VERIFICATION === 'true'
-    
+
     if (!skipVerification) {
       console.log(`🔍 Verifying transaction ${body.tx_hash} for wallet ${body.wallet_address}`)
       const verifiedTx = await verifyTransactionOnMirrorNode(body.tx_hash, body.wallet_address)
-      
+
       if (!verifiedTx) {
         console.error(`❌ Transaction verification failed for ${body.tx_hash}`)
         return NextResponse.json(
-          { 
-            success: false, 
-            message: 'Transaction verification failed. Invalid or unauthorized transaction.' 
+          {
+            success: false,
+            message: 'Transaction verification failed. Invalid or unauthorized transaction.'
           },
           { status: 403 }
         )
@@ -201,7 +219,7 @@ async function updateUserIncentives(
   if (existingUser) {
     // Update existing record
     const newTotal = (existingUser.total_swapped_usd || 0) + usdValue
-    
+
     await supabase
       .from(TABLES.USER_INCENTIVES)
       .update({
