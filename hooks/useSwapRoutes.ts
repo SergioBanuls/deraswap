@@ -335,7 +335,8 @@ async function fetchSwapRoutes({
     // Filter out malicious or invalid routes
     // Pass user's slippage tolerance to filter routes based on price impact
     // In auto mode, always show at least one route even with high price impact
-    const validRoutes = filterValidRoutes(processedRoutes, fromToken, toToken, {
+    // NOTE: filterValidRoutes is now async (validates token existence via Mirror Node)
+    const validRoutes = await filterValidRoutes(processedRoutes, fromToken, toToken, {
         ...DEFAULT_ROUTE_CONFIG,
         userSlippageTolerance: slippageTolerance,
         isAutoMode,

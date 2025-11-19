@@ -2,14 +2,15 @@
 
 import { useState } from 'react'
 import { useReownContext } from '@/contexts/ReownProvider'
-import { AccountDialog } from './AccountDialog'
+import { MissionsSheet } from './MissionsSheet'
 import { Button } from './ui/button'
+import { Trophy, Loader2, ArrowRight, Wallet } from 'lucide-react'
 
 export function SessionActionButtons() {
     const { account, loading, isConnected, disconnect, connect } =
         useReownContext()
 
-    const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false)
+    const [isMissionsSheetOpen, setIsMissionsSheetOpen] = useState(false)
 
     const handleConnectClick = async () => {
         await connect()
@@ -23,26 +24,53 @@ export function SessionActionButtons() {
         return (
             <>
                 <Button
-                    onClick={() => setIsAccountDialogOpen(true)}
-                    className='bg-neutral-200 text-neutral-700 hover:bg-neutral-300 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 rounded-full text-md cursor-pointer py-2'
+                    onClick={() => setIsMissionsSheetOpen(true)}
+                    variant="ghost"
+                    className='relative group overflow-hidden bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/30 text-white rounded-full pl-2 pr-4 h-11 transition-all duration-300'
                 >
-                    {account}
+                    <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
+
+                    <div className='flex items-center gap-3 relative z-10'>
+                        <div className='w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px] shadow-lg shadow-purple-500/20'>
+                            <div className='w-full h-full rounded-full bg-black flex items-center justify-center'>
+                                <Trophy className='w-3.5 h-3.5 text-amber-400' />
+                            </div>
+                        </div>
+                        <div className='flex flex-col items-start gap-0.5'>
+                            <span className='font-mono font-bold text-sm tracking-tight leading-none'>
+                                {formatAccount(account)}
+                            </span>
+                            <span className='text-[10px] text-purple-300 font-medium leading-none'>
+                                View Missions
+                            </span>
+                        </div>
+                    </div>
                 </Button>
-                <AccountDialog
-                    open={isAccountDialogOpen}
-                    onOpenChange={setIsAccountDialogOpen}
+                <MissionsSheet
+                    open={isMissionsSheetOpen}
+                    onOpenChange={setIsMissionsSheetOpen}
                     accountId={account}
                 />
             </>
         )
 
     return (
-        <button
+        <Button
             onClick={handleConnectClick}
             disabled={loading}
-            className='px-6 py-2 from-p bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-all duration-200 text-white'
+            className='relative overflow-hidden bg-white text-black hover:bg-neutral-200 font-bold h-11 px-6 rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]'
         >
-            {loading ? 'Connecting...' : 'Connect Wallet'}
-        </button>
+            {loading ? (
+                <span className='flex items-center gap-2'>
+                    <Loader2 className='w-4 h-4 animate-spin' />
+                    Connecting...
+                </span>
+            ) : (
+                <span className='flex items-center gap-2'>
+                    <Wallet className='w-4 h-4' />
+                    Connect Wallet
+                </span>
+            )}
+        </Button>
     )
 }

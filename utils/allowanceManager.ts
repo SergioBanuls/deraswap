@@ -77,7 +77,11 @@ export async function checkAllowance(
 
         console.log('🔍 Found allowance:', allowance)
 
-        const currentAllowance = allowance?.amount_granted || '0'
+        // IMPORTANT: Use 'amount' (remaining allowance), NOT 'amount_granted' (original allowance)
+        // Mirror Node returns:
+        // - amount: Current remaining allowance (what's left after usage)
+        // - amount_granted: Original allowance granted (historical value)
+        const currentAllowance = allowance?.amount || '0'
         const hasAllowance = BigInt(currentAllowance) >= BigInt(amount)
 
         console.log('🔍 Allowance check:', {

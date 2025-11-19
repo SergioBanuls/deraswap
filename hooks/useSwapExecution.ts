@@ -44,6 +44,7 @@ import {
 import { parseHederaError, formatErrorMessage } from '@/utils/errorMessages'
 import { useEnsureTokensAssociated } from '@/hooks/useEnsureTokensAssociated'
 import { extractAllTokensFromRoute } from '@/utils/pathUtils'
+import { calculateSwapUsdValuePrecise } from '@/utils/usdCalculator'
 
 export interface SwapExecutionParams {
     route: SwapRoute
@@ -104,6 +105,75 @@ export function useSwapExecution() {
         explorerUrl: null,
         monitoringProgress: undefined,
     })
+
+    /**
+     * Record swap for incentive system (fire and forget)
+     */
+    const recordSwapForIncentives = async (
+        params: SwapExecutionParams,
+        txHash: string
+    ) => {
+        if (!account) return
+
+        try {
+            // Calculate USD value of the swap
+            const usdValue = calculateSwapUsdValuePrecise(
+                params.fromToken,
+                params.inputAmount
+            )
+
+            // Only record if USD value is > 0
+            if (usdValue <= 0) {
+                console.log(
+                    'Skipping incentive recording - USD value is 0 or negative'
+                )
+                return
+            }
+
+            // Call API to record the swap
+            const response = await fetch('/api/incentives/record-swap', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    wallet_address: account,
+                    tx_hash: txHash,
+                    from_token_address: params.fromToken.address,
+                    to_token_address: params.toToken.address,
+                    from_amount: params.inputAmount,
+                    to_amount:
+                        typeof params.route.amountTo === 'string'
+                            ? params.route.amountTo
+                            : Array.isArray(params.route.amountTo)
+                              ? params.route.amountTo[0] || '0'
+                              : '0',
+                    usd_value: usdValue,
+                    timestamp: new Date().toISOString(),
+                }),
+            })
+
+            console.log('📤 Incentive record request sent:', {
+                wallet: account,
+                txHash,
+                usdValue,
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                console.error(
+                    '❌ Failed to record swap for incentives:',
+                    errorData
+                )
+            } else {
+                const data = await response.json()
+                console.log('✅ Swap recorded for incentives:', data)
+            }
+        } catch (error) {
+            console.warn('Error recording swap for incentives:', error)
+            // Silent failure - don't disrupt the user experience
+        }
+    }
 
     /**
      * Update execution state and show toast notification
@@ -424,6 +494,18 @@ export function useSwapExecution() {
                 if (txStatus.success) {
                     updateState('success', null, txHash, explorerUrl)
                     toast.success('Swap completed successfully!')
+
+                    // Step 9: Record swap for incentive system (fire and forget)
+                    recordSwapForIncentives(params, txHash).catch(
+                        (error: unknown) => {
+                            console.warn(
+                                'Failed to record swap for incentives:',
+                                error
+                            )
+                            // Don't block the swap success, just log the error
+                        }
+                    )
+
                     return { success: true, txHash }
                 } else {
                     throw new Error(

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Copy, LogOut, Check } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useReownConnect } from '@/hooks/useReownConnect'
+import { IncentiveProgress } from '@/components/IncentiveProgress'
 
 interface AccountDialogProps {
     open: boolean
@@ -68,6 +69,11 @@ export function AccountDialog({
                         {accountId}
                     </DialogTitle>
                 </DialogHeader>
+
+                {/* Incentive Progress Section */}
+                <div className='w-full border-t border-neutral-200 dark:border-neutral-700 pt-4 mt-2'>
+                    <IncentiveProgress walletAddress={accountId} />
+                </div>
 
                 <div className='flex flex-col gap-3 w-full mt-3'>
                     <Button
