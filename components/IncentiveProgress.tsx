@@ -154,17 +154,15 @@ export function IncentiveProgress({ walletAddress }: IncentiveProgressProps) {
                 </div>
               </div>
 
-              {progress.nftInfo.transactionId && (
-                <a
-                  href={`https://hashscan.io/mainnet/transaction/${progress.nftInfo.transactionId}`}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='mt-3 flex items-center justify-center w-full py-2 rounded-lg bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 text-xs font-medium text-green-400 transition-colors'
-                >
-                  View on HashScan
-                  <ArrowRight className='w-3 h-3 ml-1' />
-                </a>
-              )}
+              <a
+                href={progress.nftInfo.explorerUrl || `https://hashscan.io/${process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'mainnet'}/token/${progress.nftInfo.tokenId}/${progress.nftInfo.serialNumber}`}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='mt-3 flex items-center justify-center w-full py-2 rounded-lg bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 text-xs font-medium text-green-400 transition-colors'
+              >
+                View on HashScan
+                <ArrowRight className='w-3 h-3 ml-1' />
+              </a>
             </div>
           </div>
         </div>

@@ -63,4 +63,6 @@ export const supabaseAdmin = () => {
 export const TABLES = {
   SWAP_HISTORY: 'swap_history',
   USER_INCENTIVES: 'user_incentives',
+  MISSIONS: 'missions',
+  USER_MISSION_CLAIMS: 'user_mission_claims',
 } as const
