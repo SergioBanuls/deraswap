@@ -45,7 +45,8 @@ export function AmountInput({
 }: AmountInputProps) {
     // Check if amount exceeds balance
     const checkBalanceError = (value: string) => {
-        if (!value || !token || !balance) {
+        // Don't validate if no wallet connected (balance undefined), no value, or no token
+        if (!value || !token || balance === undefined) {
             onBalanceError?.(false)
             return false
         }

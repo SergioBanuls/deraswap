@@ -1,8 +1,8 @@
 /**
- * Hook for fetching swap routes from ETASwap API
+ * Hook for fetching swap routes
  *
  * Uses TanStack Query for intelligent caching and deduplication.
- * Validates inputs before making API calls to prevent overflow/underflow.
+ * Routes are fetched through our API proxy which handles ETASwap integration.
  * Routes are cached for 30 seconds and deduplicated within 5 seconds.
  *
  * @param fromToken - Source token
@@ -25,7 +25,7 @@ import {
     DEFAULT_ROUTE_CONFIG,
 } from '@/utils/routeValidation'
 
-const ETASWAP_API_BASE_URL = 'https://api.etaswap.com/v1'
+const API_BASE_URL = '/api'
 const WHBAR_TOKEN_ID = '0.0.1456986'
 const USDC_TOKEN_ID = '0.0.456858' // USDC - most liquid stablecoin
 
@@ -65,7 +65,7 @@ async function tryRouteViaUSDC(
 
         // Step 1: Get route from fromToken → USDC
         console.log(`  📍 Step 1: ${fromToken.symbol} → USDC`)
-        const step1Response = await axios.get(`${ETASWAP_API_BASE_URL}/rates`, {
+        const step1Response = await axios.get(`${API_BASE_URL}/swap-routes`, {
             params: {
                 tokenFrom: fromTokenAddress,
                 tokenTo: usdcAddress,
@@ -97,7 +97,7 @@ async function tryRouteViaUSDC(
         console.log(
             `  📍 Step 2: USDC → ${toToken.symbol} (amount: ${usdcAmount})`
         )
-        const step2Response = await axios.get(`${ETASWAP_API_BASE_URL}/rates`, {
+        const step2Response = await axios.get(`${API_BASE_URL}/swap-routes`, {
             params: {
                 tokenFrom: usdcAddress,
                 tokenTo: toTokenAddress,
@@ -143,8 +143,8 @@ async function fetchSwapRoutes({
     prices,
     isAutoMode,
 }: FetchRoutesParams): Promise<SwapRoute[]> {
-    // Validate amount before making API call
-    const validation = validateAmount(amount, fromToken.decimals, balance)
+    // Validate amount before making API call (without balance check - we want routes regardless of balance)
+    const validation = validateAmount(amount, fromToken.decimals)
     if (!validation.valid) {
         throw new Error(validation.error || 'Invalid amount')
     }
@@ -157,8 +157,8 @@ async function fetchSwapRoutes({
     const tokenFromAddress = fromToken.solidityAddress
     const tokenToAddress = toToken.solidityAddress
 
-    // Fetch routes from ETASwap API
-    const url = `${ETASWAP_API_BASE_URL}/rates`
+    // Fetch routes from our API proxy
+    const url = `${API_BASE_URL}/swap-routes`
     const params = {
         tokenFrom: tokenFromAddress,
         tokenTo: tokenToAddress,
@@ -166,7 +166,7 @@ async function fetchSwapRoutes({
         isReverse: false,
     }
 
-    console.log('ETASwap API request:', { url, params })
+    console.log('API request:', { url, params })
 
     const response = await axios.get(url, { params })
     const etaRoutes = response.data
@@ -366,18 +366,6 @@ export function useSwapRoutes(
 ) {
     const queryClient = useQueryClient()
 
-    // Check if balance is sufficient before making API call
-    const hasSufficientBalance = (() => {
-        if (!balance || !fromToken || !amount) return true // If no balance info, let the query proceed
-        
-        try {
-            const validation = validateAmount(amount, fromToken.decimals, balance)
-            return validation.valid // Only true if balance is sufficient
-        } catch {
-            return false // Invalid amount or insufficient balance
-        }
-    })()
-
     return useQuery({
         queryKey: [
             'swapRoutes',
@@ -407,8 +395,7 @@ export function useSwapRoutes(
             fromToken && 
             toToken && 
             amount && 
-            parseFloat(amount) > 0 && 
-            hasSufficientBalance // Don't fetch routes if insufficient balance
+            parseFloat(amount) > 0
         ),
         staleTime: 30 * 1000, // 30s
         gcTime: 5 * 60 * 1000, // 5min

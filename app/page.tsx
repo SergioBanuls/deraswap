@@ -48,6 +48,7 @@ function HomeContent() {
     // Check multiple possible keys: token.address or HBAR special case
     // Return "0" if token is selected but has no balance (not associated or 0 balance)
     const fromTokenBalance = (() => {
+        if (!account) return undefined // No wallet connected
         if (!fromToken) return undefined
         if (balancesLoading) return undefined // Still loading
 
@@ -176,10 +177,9 @@ function HomeContent() {
             fromToken !== null &&
             toToken !== null &&
             amount !== '' &&
-            parseFloat(amount) > 0 &&
-            !hasBalanceError // Don't show routes if insufficient balance
+            parseFloat(amount) > 0
         )
-    }, [fromToken, toToken, amount, hasBalanceError])
+    }, [fromToken, toToken, amount])
 
     // Memoize handler functions
     const handleSwapTokens = useCallback(() => {
