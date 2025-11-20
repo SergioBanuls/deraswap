@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check eligibility
-    const totalSwappedUsd = userIncentive.total_swapped_usd || 0
+    const totalSwappedUsd = (userIncentive as any).total_swapped_usd || 0
     if (totalSwappedUsd < INCENTIVE_THRESHOLD_USD) {
       return NextResponse.json<MintNFTResponse>(
         {
@@ -52,16 +52,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already minted
-    if (userIncentive.nft_minted) {
+    if ((userIncentive as any).nft_minted) {
       return NextResponse.json<MintNFTResponse>(
         {
           success: false,
           message: 'NFT already minted for this wallet',
           nft: {
-            tokenId: userIncentive.nft_token_id || '',
-            serialNumber: userIncentive.nft_serial_number || '',
-            mintedAt: userIncentive.nft_minted_at || '',
-            explorerUrl: `https://hashscan.io/mainnet/token/${userIncentive.nft_token_id}/${userIncentive.nft_serial_number}`,
+            tokenId: (userIncentive as any).nft_token_id || '',
+            serialNumber: (userIncentive as any).nft_serial_number || '',
+            mintedAt: (userIncentive as any).nft_minted_at || '',
+            explorerUrl: `https://hashscan.io/mainnet/token/${(userIncentive as any).nft_token_id}/${(userIncentive as any).nft_serial_number}`,
           },
         },
         { status: 400 }
@@ -96,8 +96,9 @@ export async function POST(request: NextRequest) {
       const mintedAt = new Date().toISOString()
 
       // Update database
-      const { error: updateError } = await supabase
-        .from(TABLES.USER_INCENTIVES)
+      const updateClient: any = supabaseAdmin()
+      const { error: updateError } = await updateClient
+        .from('user_incentives')
         .update({
           nft_minted: true,
           nft_token_id: nftTokenId,

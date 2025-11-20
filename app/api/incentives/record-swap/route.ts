@@ -159,7 +159,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert swap record
-    const { error: swapError } = await supabase
+    const insertClient: any = supabase
+    const { error: swapError } = await insertClient
       .from(TABLES.SWAP_HISTORY)
       .insert({
         wallet_address: body.wallet_address,
@@ -218,9 +219,10 @@ async function updateUserIncentives(
 
   if (existingUser) {
     // Update existing record
-    const newTotal = (existingUser.total_swapped_usd || 0) + usdValue
+    const newTotal = ((existingUser as any).total_swapped_usd || 0) + usdValue
 
-    await supabase
+    const updateClient: any = supabase
+    await updateClient
       .from(TABLES.USER_INCENTIVES)
       .update({
         total_swapped_usd: newTotal,
@@ -229,7 +231,8 @@ async function updateUserIncentives(
       .eq('wallet_address', walletAddress)
   } else {
     // Create new record
-    await supabase.from(TABLES.USER_INCENTIVES).insert({
+    const insertClient: any = supabase
+    await insertClient.from(TABLES.USER_INCENTIVES).insert({
       wallet_address: walletAddress,
       total_swapped_usd: usdValue,
     })
@@ -257,18 +260,18 @@ async function getUserProgress(walletAddress: string) {
     }
   }
 
-  const totalSwappedUsd = userIncentive.total_swapped_usd || 0
+  const totalSwappedUsd = (userIncentive as any).total_swapped_usd || 0
   const progress = Math.min((totalSwappedUsd / INCENTIVE_THRESHOLD_USD) * 100, 100)
   const nftEligible = totalSwappedUsd >= INCENTIVE_THRESHOLD_USD
-  const nftMinted = userIncentive.nft_minted || false
+  const nftMinted = (userIncentive as any).nft_minted || false
 
   let nftInfo = undefined
-  if (nftMinted && userIncentive.nft_token_id && userIncentive.nft_serial_number) {
+  if (nftMinted && (userIncentive as any).nft_token_id && (userIncentive as any).nft_serial_number) {
     nftInfo = {
-      tokenId: userIncentive.nft_token_id,
-      serialNumber: userIncentive.nft_serial_number,
-      mintedAt: userIncentive.nft_minted_at || '',
-      explorerUrl: `https://hashscan.io/mainnet/token/${userIncentive.nft_token_id}/${userIncentive.nft_serial_number}`,
+      tokenId: (userIncentive as any).nft_token_id,
+      serialNumber: (userIncentive as any).nft_serial_number,
+      mintedAt: (userIncentive as any).nft_minted_at || '',
+      explorerUrl: `https://hashscan.io/mainnet/token/${(userIncentive as any).nft_token_id}/${(userIncentive as any).nft_serial_number}`,
     }
   }
 

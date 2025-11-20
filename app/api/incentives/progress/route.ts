@@ -62,24 +62,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate progress
-    const totalSwappedUsd = userIncentive.total_swapped_usd || 0
+    const totalSwappedUsd = (userIncentive as any).total_swapped_usd || 0
     const progressPercentage = Math.min(
       (totalSwappedUsd / INCENTIVE_THRESHOLD_USD) * 100,
       100
     )
     const nftEligible = totalSwappedUsd >= INCENTIVE_THRESHOLD_USD
-    const nftMinted = userIncentive.nft_minted || false
+    const nftMinted = (userIncentive as any).nft_minted || false
 
     let nftInfo = undefined
-    if (nftMinted && userIncentive.nft_token_id && userIncentive.nft_serial_number) {
+    if (nftMinted && (userIncentive as any).nft_token_id && (userIncentive as any).nft_serial_number) {
       // Determine explorer URL based on network
       const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'mainnet'
-      const explorerUrl = `https://hashscan.io/${network}/token/${userIncentive.nft_token_id}/${userIncentive.nft_serial_number}`
+      const explorerUrl = `https://hashscan.io/${network}/token/${(userIncentive as any).nft_token_id}/${(userIncentive as any).nft_serial_number}`
 
       nftInfo = {
-        tokenId: userIncentive.nft_token_id,
-        serialNumber: userIncentive.nft_serial_number,
-        mintedAt: userIncentive.nft_minted_at || '',
+        tokenId: (userIncentive as any).nft_token_id,
+        serialNumber: (userIncentive as any).nft_serial_number,
+        mintedAt: (userIncentive as any).nft_minted_at || '',
         explorerUrl,
       }
     }
