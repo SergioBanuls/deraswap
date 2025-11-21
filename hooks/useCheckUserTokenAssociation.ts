@@ -55,7 +55,8 @@ export function useCheckUserTokenAssociation(
 
             console.log(
                 `🔍 Token ${tokenId} association check:`,
-                hasToken ? '✅ Associated' : '❌ Not associated'
+                hasToken ? '✅ Associated' : '❌ Not associated',
+                `(found ${data.associatedTokens?.length || 0} associated tokens)`
             )
             setIsAssociated(hasToken)
         } catch (err) {

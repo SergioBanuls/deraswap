@@ -84,6 +84,9 @@ export const SwapCard = memo(function SwapCard({
 
     // State for progress dialog
     const [showProgressDialog, setShowProgressDialog] = useState(false)
+    
+    // Optimistic association state - assume success until Mirror Node confirms
+    const [optimisticAssociation, setOptimisticAssociation] = useState(false)
 
     // Handle token association
     const handleAssociateToken = useCallback(async () => {
@@ -93,15 +96,47 @@ export const SwapCard = memo(function SwapCard({
         const success = await associateToken(toToken.address)
 
         if (success) {
-            console.log('✅ Token associated successfully')
-            // Wait a moment for the network to propagate the change
-            setTimeout(() => {
+            console.log('✅ Token associated successfully, waiting for Mirror Node to update...')
+            
+            // Optimistically assume the token is now associated
+            setOptimisticAssociation(true)
+            
+            // Wait for Mirror Node to propagate (5s initial delay)
+            // Then retry up to 3 times with exponential backoff
+            const checkAssociation = async (attempt: number = 1): Promise<void> => {
+                const maxAttempts = 4
+                const delays = [5000, 3000, 3000, 3000] // 5s, then 3s each
+                
+                await new Promise(resolve => setTimeout(resolve, delays[attempt - 1]))
+                
+                console.log(`🔍 Checking association status (attempt ${attempt}/${maxAttempts})...`)
                 refreshTokenAssociation()
-            }, 2000)
+                
+                // If not the last attempt, schedule another check
+                if (attempt < maxAttempts) {
+                    setTimeout(() => checkAssociation(attempt + 1), delays[attempt])
+                }
+            }
+            
+            checkAssociation(1)
         } else {
             console.error('❌ Token association failed:', associationError)
+            setOptimisticAssociation(false)
         }
     }, [toToken, associateToken, associationError, refreshTokenAssociation])
+
+    // Reset optimistic association when token changes or association is confirmed
+    useEffect(() => {
+        if (isAssociated) {
+            // If Mirror Node confirms association, clear optimistic state
+            setOptimisticAssociation(false)
+        }
+    }, [isAssociated])
+
+    // Reset optimistic association when toToken changes
+    useEffect(() => {
+        setOptimisticAssociation(false)
+    }, [toToken?.address])
 
     // Handle swap execution
     const handleSwap = useCallback(async () => {
@@ -173,12 +208,12 @@ export const SwapCard = memo(function SwapCard({
         selectedRoute &&
         !isExecuting &&
         !hasBalanceError && // Disable if insufficient balance
-        isAssociated && // Only enable if token is associated
+        (isAssociated || optimisticAssociation) && // Enable if confirmed OR optimistically associated
         !isHistoryOpen // Disable if history is open
 
     // Determine if we need to show associate button
     const needsAssociation =
-        isConnected && toToken && !isAssociated && !isChecking
+        isConnected && toToken && !isAssociated && !isChecking && !optimisticAssociation
 
     // Debug log
     console.log('SwapCard state:', {
@@ -190,6 +225,7 @@ export const SwapCard = memo(function SwapCard({
         isExecuting,
         isAssociated,
         isChecking,
+        optimisticAssociation,
         needsAssociation,
     })
 
