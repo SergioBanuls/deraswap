@@ -13,11 +13,8 @@
   [![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
   [![Hedera](https://img.shields.io/badge/Hedera-Mainnet-purple?style=for-the-badge)](https://hedera.com/)
-  [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-[Features](#-features) • [Quick Start](#-getting-started) • [Documentation](#-table-of-contents) • [Contributing](#-contributing)
-
----
+**[🚀 Launch App](https://deraswap.vercel.app/)** | [Features](#-features) • [Quick Start](#-getting-started) • [Documentation](#-table-of-contents) • [Contributing](#-contributing)---
 
 </div>
 
@@ -1174,21 +1171,6 @@ This project is open-source and available under the **MIT License**.
 -   **Reown (WalletConnect)** - Multi-wallet connection standard
 -   **Supabase** - PostgreSQL database platform
 -   **Vercel** - Hosting and deployment platform
-
----
-
-## 💬 Support & Community
-
-<div align="center">
-
-| Resource             | Link                                                                       |
-| -------------------- | -------------------------------------------------------------------------- |
-| 🐛 **Issues**        | [GitHub Issues](https://github.com/SergioBanuls/deraswap/issues)           |
-| 💬 **Discussions**   | [GitHub Discussions](https://github.com/SergioBanuls/deraswap/discussions) |
-| 📖 **Documentation** | [docs.deraswap.com](https://docs.deraswap.com)                             |
-| 🐦 **Twitter**       | [@DeraSwap](https://twitter.com/deraswap)                                  |
-
-</div>
 
 ---
 
