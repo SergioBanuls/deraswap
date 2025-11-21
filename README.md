@@ -15,28 +15,36 @@
   [![Hedera](https://img.shields.io/badge/Hedera-Mainnet-purple?style=for-the-badge)](https://hedera.com/)
   [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-  [Features](#-features) • [Quick Start](#-getting-started) • [Documentation](#-table-of-contents) • [Contributing](#-contributing)
+[Features](#-features) • [Quick Start](#-getting-started) • [Documentation](#-table-of-contents) • [Contributing](#-contributing)
 
-  ---
+---
 
 </div>
 
 > DeraSwap is a production-ready token swap aggregator that provides optimal pricing across multiple DEXs on Hedera, featuring seamless wallet integration, real-time route optimization, and an NFT-based reward system for active traders.
 
+## 📊 Pitch Deck
+
+**[📄 View our Pitch Deck](https://drive.google.com/file/d/1BHZHcSSzaAyzhvhg_vG2oGFMhffYMEUU/view?usp=sharing)** - Learn more about DeraSwap's vision, technology, and roadmap.
+
+**[🎥 Watch Demo Video](https://www.loom.com/share/9bfd564e5fea4dd98246a67d22752c4d)** - See DeraSwap in action with a complete walkthrough.
+
+---
+
 ## 📑 Table of Contents
 
-- [✨ Features](#-features)
-- [🛠️ Technology Stack](#️-technology-stack)
-- [🏗️ Architecture](#️-architecture)
-- [🚀 Getting Started](#-getting-started)
-- [🔄 Key Flows](#-key-flows)
-- [📜 Smart Contracts](#-smart-contracts)
-- [⚙️ Configuration](#️-configuration)
-- [💻 Development](#-development)
-- [🚢 Deployment](#-deployment)
-- [📚 API Reference](#-api-reference)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
+-   [✨ Features](#-features)
+-   [🛠️ Technology Stack](#️-technology-stack)
+-   [🏗️ Architecture](#️-architecture)
+-   [🚀 Getting Started](#-getting-started)
+-   [🔄 Key Flows](#-key-flows)
+-   [📜 Smart Contracts](#-smart-contracts)
+-   [⚙️ Configuration](#️-configuration)
+-   [💻 Development](#-development)
+-   [🚢 Deployment](#-deployment)
+-   [📚 API Reference](#-api-reference)
+-   [🤝 Contributing](#-contributing)
+-   [📄 License](#-license)
 
 ---
 
@@ -44,33 +52,33 @@
 
 ### 🎯 Core Functionality
 
-- **Multi-DEX Aggregation**: Automatically finds the best swap routes across SaucerSwap V1, SaucerSwap V2, and other Hedera DEXs via ETASwap integration
-- **Optimal Pricing**: Intelligent route selection based on price impact, gas costs, and route complexity
-- **Real-time Token Prices**: Live USD pricing for all supported tokens with automatic refresh
-- **Slippage Protection**: Configurable slippage tolerance (auto or manual 0.1%-5%) to protect against unfavorable swaps
-- **Transaction Monitoring**: Real-time transaction status tracking with detailed progress updates
+-   **Multi-DEX Aggregation**: Automatically finds the best swap routes across SaucerSwap V1, SaucerSwap V2, and other Hedera DEXs via ETASwap integration
+-   **Optimal Pricing**: Intelligent route selection based on price impact, gas costs, and route complexity
+-   **Real-time Token Prices**: Live USD pricing for all supported tokens with automatic refresh
+-   **Slippage Protection**: Configurable slippage tolerance (auto or manual 0.1%-5%) to protect against unfavorable swaps
+-   **Transaction Monitoring**: Real-time transaction status tracking with detailed progress updates
 
 ### 👛 Wallet Integration
 
-- **Native Hedera Wallets**: Support for HashPack, Kabila, and other Hedera-native wallets
-- **WalletConnect v2**: Industry-standard wallet connection via Reown AppKit
-- **Persistent Sessions**: Automatic wallet reconnection across browser sessions
-- **Secure Signing**: Transaction signing happens directly in user's wallet - private keys never exposed
+-   **Native Hedera Wallets**: Support for HashPack, Kabila, and other Hedera-native wallets
+-   **WalletConnect v2**: Industry-standard wallet connection via Reown AppKit
+-   **Persistent Sessions**: Automatic wallet reconnection across browser sessions
+-   **Secure Signing**: Transaction signing happens directly in user's wallet - private keys never exposed
 
 ### 🎁 Gamified Incentives
 
-- **NFT Rewards**: Users earn unique NFTs after accumulating $10 USD in swap volume
-- **Progress Tracking**: Real-time visual progress indicator showing swap volume towards NFT eligibility
-- **Mission System**: Extensible mission framework for future campaigns and rewards
-- **On-chain Verification**: All swaps verified on Hedera Mirror Node to prevent fraud
+-   **NFT Rewards**: Users earn unique NFTs after accumulating $10 USD in swap volume
+-   **Progress Tracking**: Real-time visual progress indicator showing swap volume towards NFT eligibility
+-   **Mission System**: Extensible mission framework for future campaigns and rewards
+-   **On-chain Verification**: All swaps verified on Hedera Mirror Node to prevent fraud
 
 ### 🎨 User Experience
 
-- **Token Auto-Association**: Automatic Hedera token association when needed
-- **Allowance Management**: Smart token approval with buffer to minimize transaction count
-- **Swap History**: Complete transaction history with USD values and explorer links
-- **Responsive Design**: Mobile-first design that works seamlessly on all devices
-- **Toast Notifications**: Real-time feedback for all user actions
+-   **Token Auto-Association**: Automatic Hedera token association when needed
+-   **Allowance Management**: Smart token approval with buffer to minimize transaction count
+-   **Swap History**: Complete transaction history with USD values and explorer links
+-   **Responsive Design**: Mobile-first design that works seamlessly on all devices
+-   **Toast Notifications**: Real-time feedback for all user actions
 
 ---
 
@@ -78,48 +86,48 @@
 
 ### 🎨 Frontend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Next.js** | 16.0.1 | React framework with App Router, API routes, SSR/SSG |
-| **React** | 18 | UI component library |
-| **TypeScript** | 5.9.3 | Static type checking |
-| **Tailwind CSS** | 4.1.16 | Utility-first CSS framework |
-| **Radix UI** | Latest | Unstyled, accessible component primitives |
-| **Lucide React** | 0.552.0 | Icon library (1000+ icons) |
-| **Sonner** | 2.0.7 | Beautiful toast notifications |
+| Technology       | Version | Purpose                                              |
+| ---------------- | ------- | ---------------------------------------------------- |
+| **Next.js**      | 16.0.1  | React framework with App Router, API routes, SSR/SSG |
+| **React**        | 18      | UI component library                                 |
+| **TypeScript**   | 5.9.3   | Static type checking                                 |
+| **Tailwind CSS** | 4.1.16  | Utility-first CSS framework                          |
+| **Radix UI**     | Latest  | Unstyled, accessible component primitives            |
+| **Lucide React** | 0.552.0 | Icon library (1000+ icons)                           |
+| **Sonner**       | 2.0.7   | Beautiful toast notifications                        |
 
 ### 📊 State Management & Data Fetching
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **TanStack Query** | 5.90.7 | Server state management, caching, and background refetching |
-| **React Context** | - | Local state (wallet connection, token prices) |
+| Technology         | Version | Purpose                                                     |
+| ------------------ | ------- | ----------------------------------------------------------- |
+| **TanStack Query** | 5.90.7  | Server state management, caching, and background refetching |
+| **React Context**  | -       | Local state (wallet connection, token prices)               |
 
 ### ⛓️ Blockchain Integration
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **@hashgraph/sdk** | 2.76.0 | Hedera SDK - transaction building, account operations |
-| **@hashgraph/hedera-wallet-connect** | 2.0.3 | Native WalletConnect integration for Hedera |
-| **@reown/appkit** | 1.8.13 | Reown AppKit for multi-wallet support |
-| **@walletconnect/sign-client** | 2.23.0 | Low-level WalletConnect protocol implementation |
+| Technology                           | Version | Purpose                                               |
+| ------------------------------------ | ------- | ----------------------------------------------------- |
+| **@hashgraph/sdk**                   | 2.76.0  | Hedera SDK - transaction building, account operations |
+| **@hashgraph/hedera-wallet-connect** | 2.0.3   | Native WalletConnect integration for Hedera           |
+| **@reown/appkit**                    | 1.8.13  | Reown AppKit for multi-wallet support                 |
+| **@walletconnect/sign-client**       | 2.23.0  | Low-level WalletConnect protocol implementation       |
 
 ### 🗄️ Backend & Database
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Next.js API Routes** | 16.0.1 | Server-side API endpoints |
-| **Supabase** | 2.83.0 | PostgreSQL database for incentives and swap history |
-| **Axios** | 1.7.0 | HTTP client for external API integration |
+| Technology             | Version | Purpose                                             |
+| ---------------------- | ------- | --------------------------------------------------- |
+| **Next.js API Routes** | 16.0.1  | Server-side API endpoints                           |
+| **Supabase**           | 2.83.0  | PostgreSQL database for incentives and swap history |
+| **Axios**              | 1.7.0   | HTTP client for external API integration            |
 
 ### 🔧 Smart Contracts & Development
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Hardhat** | 2.19.0 | Solidity development environment |
-| **ethers.js** | 5.7.2 | Contract interaction library |
-| **OpenZeppelin Contracts** | 4.9.3 | Audited smart contract libraries |
-| **Solidity** | 0.8.x | Smart contract programming language |
+| Technology                 | Version | Purpose                             |
+| -------------------------- | ------- | ----------------------------------- |
+| **Hardhat**                | 2.19.0  | Solidity development environment    |
+| **ethers.js**              | 5.7.2   | Contract interaction library        |
+| **OpenZeppelin Contracts** | 4.9.3   | Audited smart contract libraries    |
+| **Solidity**               | 0.8.x   | Smart contract programming language |
 
 ---
 
@@ -264,131 +272,131 @@ deraswap/
 
 ### ✅ Prerequisites
 
-- **Node.js** 18+ or higher
-- **pnpm** (recommended) or npm
-- A **Reown Project ID** from [Reown Cloud](https://cloud.reown.com/)
-- A **Supabase Project** for the incentive system
-- A **Validation Cloud API Key** for Hedera Mirror Node access (optional but recommended)
-- A **Hedera Account** on testnet or mainnet
+-   **Node.js** 18+ or higher
+-   **pnpm** (recommended) or npm
+-   A **Reown Project ID** from [Reown Cloud](https://cloud.reown.com/)
+-   A **Supabase Project** for the incentive system
+-   A **Validation Cloud API Key** for Hedera Mirror Node access (optional but recommended)
+-   A **Hedera Account** on testnet or mainnet
 
 ### 📦 Installation
 
 1. **Clone the repository**
 
-   ```bash
-   git clone https://github.com/yourusername/deraswap.git
-   cd deraswap
-   ```
+    ```bash
+    git clone https://github.com/yourusername/deraswap.git
+    cd deraswap
+    ```
 
 2. **Install dependencies**
 
-   ```bash
-   pnpm install
-   ```
+    ```bash
+    pnpm install
+    ```
 
 3. **Configure environment variables**
 
-   Copy the example environment file and update it:
+    Copy the example environment file and update it:
 
-   ```bash
-   cp .env.example .env.local
-   ```
+    ```bash
+    cp .env.example .env.local
+    ```
 
-   Update the following variables in `.env.local`:
+    Update the following variables in `.env.local`:
 
-   ```bash
-   # === Wallet Connection ===
-   NEXT_PUBLIC_REOWN_PROJECT_ID=your_reown_project_id
-   NEXT_PUBLIC_HEDERA_NETWORK=testnet  # or mainnet
+    ```bash
+    # === Wallet Connection ===
+    NEXT_PUBLIC_REOWN_PROJECT_ID=your_reown_project_id
+    NEXT_PUBLIC_HEDERA_NETWORK=testnet  # or mainnet
 
-   # === Hedera Mirror Node (Optional - uses public endpoint if not set) ===
-   VALIDATION_CLOUD_BASE_URL=https://mainnet.hedera.validationcloud.io/v1
-   VALIDATION_CLOUD_API_KEY=your_validation_cloud_api_key
+    # === Hedera Mirror Node (Optional - uses public endpoint if not set) ===
+    VALIDATION_CLOUD_BASE_URL=https://mainnet.hedera.validationcloud.io/v1
+    VALIDATION_CLOUD_API_KEY=your_validation_cloud_api_key
 
-   # === Supabase Database ===
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+    # === Supabase Database ===
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-   # === NFT Incentive System ===
-   NEXT_PUBLIC_NFT_TOKEN_ID=0.0.XXXXXX
-   NFT_TOKEN_ID=0.0.XXXXXX
-   NEXT_PUBLIC_DEFAULT_MISSION_ID=uuid_of_default_mission
-   NFT_WALLET_ID=0.0.YYYYYY
-   NFT_WALLET_PRIVATE_KEY=your_nft_treasury_private_key
+    # === NFT Incentive System ===
+    NEXT_PUBLIC_NFT_TOKEN_ID=0.0.XXXXXX
+    NFT_TOKEN_ID=0.0.XXXXXX
+    NEXT_PUBLIC_DEFAULT_MISSION_ID=uuid_of_default_mission
+    NFT_WALLET_ID=0.0.YYYYYY
+    NFT_WALLET_PRIVATE_KEY=your_nft_treasury_private_key
 
-   # === Swap Router Configuration ===
-   NEXT_PUBLIC_SWAP_ROUTER_TYPE=etaswap  # or custom
-   NEXT_PUBLIC_CUSTOM_ROUTER_ADDRESS=0x...  # if using custom router
-   NEXT_PUBLIC_CUSTOM_ROUTER_HEDERA_ID=0.0.X  # if using custom router
-   ```
+    # === Swap Router Configuration ===
+    NEXT_PUBLIC_SWAP_ROUTER_TYPE=etaswap  # or custom
+    NEXT_PUBLIC_CUSTOM_ROUTER_ADDRESS=0x...  # if using custom router
+    NEXT_PUBLIC_CUSTOM_ROUTER_HEDERA_ID=0.0.X  # if using custom router
+    ```
 
 4. **Set up Supabase database**
 
-   Create the following tables in your Supabase project:
+    Create the following tables in your Supabase project:
 
-   ```sql
-   -- User incentive progress tracking
-   CREATE TABLE user_incentives (
-     wallet_address TEXT PRIMARY KEY,
-     total_swapped_usd DECIMAL DEFAULT 0,
-     nft_minted BOOLEAN DEFAULT FALSE,
-     nft_token_id TEXT,
-     nft_serial_number INTEGER,
-     nft_minted_at TIMESTAMP,
-     created_at TIMESTAMP DEFAULT NOW(),
-     updated_at TIMESTAMP DEFAULT NOW()
-   );
+    ```sql
+    -- User incentive progress tracking
+    CREATE TABLE user_incentives (
+      wallet_address TEXT PRIMARY KEY,
+      total_swapped_usd DECIMAL DEFAULT 0,
+      nft_minted BOOLEAN DEFAULT FALSE,
+      nft_token_id TEXT,
+      nft_serial_number INTEGER,
+      nft_minted_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );
 
-   -- Swap transaction history
-   CREATE TABLE swap_history (
-     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     wallet_address TEXT NOT NULL,
-     tx_hash TEXT UNIQUE NOT NULL,
-     token_in_id TEXT NOT NULL,
-     token_out_id TEXT NOT NULL,
-     amount_in DECIMAL NOT NULL,
-     amount_out DECIMAL NOT NULL,
-     usd_value DECIMAL,
-     created_at TIMESTAMP DEFAULT NOW()
-   );
+    -- Swap transaction history
+    CREATE TABLE swap_history (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      wallet_address TEXT NOT NULL,
+      tx_hash TEXT UNIQUE NOT NULL,
+      token_in_id TEXT NOT NULL,
+      token_out_id TEXT NOT NULL,
+      amount_in DECIMAL NOT NULL,
+      amount_out DECIMAL NOT NULL,
+      usd_value DECIMAL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
 
-   -- Mission definitions
-   CREATE TABLE missions (
-     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name TEXT NOT NULL,
-     description TEXT,
-     nft_token_id TEXT NOT NULL,
-     requirement_type TEXT DEFAULT 'swap_volume',
-     requirement_amount DECIMAL DEFAULT 10,
-     available_serials INTEGER[],
-     active BOOLEAN DEFAULT TRUE,
-     created_at TIMESTAMP DEFAULT NOW()
-   );
+    -- Mission definitions
+    CREATE TABLE missions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      description TEXT,
+      nft_token_id TEXT NOT NULL,
+      requirement_type TEXT DEFAULT 'swap_volume',
+      requirement_amount DECIMAL DEFAULT 10,
+      available_serials INTEGER[],
+      active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
 
-   -- User mission claims
-   CREATE TABLE user_mission_claims (
-     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     mission_id UUID REFERENCES missions(id),
-     wallet_address TEXT NOT NULL,
-     nft_serial_number INTEGER NOT NULL,
-     claimed_at TIMESTAMP DEFAULT NOW(),
-     UNIQUE(mission_id, wallet_address)
-   );
+    -- User mission claims
+    CREATE TABLE user_mission_claims (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      mission_id UUID REFERENCES missions(id),
+      wallet_address TEXT NOT NULL,
+      nft_serial_number INTEGER NOT NULL,
+      claimed_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(mission_id, wallet_address)
+    );
 
-   -- Create indexes
-   CREATE INDEX idx_swap_history_wallet ON swap_history(wallet_address);
-   CREATE INDEX idx_swap_history_created ON swap_history(created_at DESC);
-   CREATE INDEX idx_user_mission_claims_wallet ON user_mission_claims(wallet_address);
-   ```
+    -- Create indexes
+    CREATE INDEX idx_swap_history_wallet ON swap_history(wallet_address);
+    CREATE INDEX idx_swap_history_created ON swap_history(created_at DESC);
+    CREATE INDEX idx_user_mission_claims_wallet ON user_mission_claims(wallet_address);
+    ```
 
 5. **Start the development server**
 
-   ```bash
-   pnpm dev
-   ```
+    ```bash
+    pnpm dev
+    ```
 
-   The application will be available at `http://localhost:3000`
+    The application will be available at `http://localhost:3000`
 
 ---
 
@@ -570,10 +578,10 @@ The complete swap execution follows these steps:
 
 **Session Persistence:**
 
-- Session data stored in localStorage automatically by DAppConnector
-- On page reload: ReownProvider.init() attempts to restore session
-- If valid session exists: Auto-reconnect without modal
-- If session expired: User must connect again
+-   Session data stored in localStorage automatically by DAppConnector
+-   On page reload: ReownProvider.init() attempts to restore session
+-   If valid session exists: Auto-reconnect without modal
+-   If session expired: User must connect again
 
 ### 3. 🎁 NFT Incentive Claim Flow
 
@@ -677,11 +685,12 @@ The complete swap execution follows these steps:
 The Exchange contract is a modified version of the ETASwap exchange, providing multi-DEX aggregation capabilities.
 
 **Key Features:**
-- Supports multiple DEX adapters (SaucerSwap V1, V2, etc.)
-- Handles both single and split swaps for optimal pricing
-- Pausable for emergency situations
-- Reentrancy guard protection
-- Owner-controlled adapter management
+
+-   Supports multiple DEX adapters (SaucerSwap V1, V2, etc.)
+-   Handles both single and split swaps for optimal pricing
+-   Pausable for emergency situations
+-   Reentrancy guard protection
+-   Owner-controlled adapter management
 
 **Main Functions:**
 
@@ -699,10 +708,10 @@ function swap(
 
 **Deployed Contracts:**
 
-| Network | Contract | Address (EVM) | Address (Hedera) |
-|---------|----------|---------------|------------------|
-| Mainnet | ETASwap Exchange (Official) | `0x00000000000000000000000000000000004983f3` | `0.0.4817907` |
-| Testnet | Custom Exchange | Deploy your own | Deploy your own |
+| Network | Contract                    | Address (EVM)                                | Address (Hedera) |
+| ------- | --------------------------- | -------------------------------------------- | ---------------- |
+| Mainnet | ETASwap Exchange (Official) | `0x00000000000000000000000000000000004983f3` | `0.0.4817907`    |
+| Testnet | Custom Exchange             | Deploy your own                              | Deploy your own  |
 
 ### 🔌 SaucerSwap V2 Adapter
 
@@ -711,10 +720,11 @@ function swap(
 Adapter contract that integrates the Exchange with SaucerSwap V2 DEX.
 
 **Key Features:**
-- Handles token transfers to/from SaucerSwap router
-- Manages WHBAR wrapping/unwrapping for HBAR swaps
-- Configurable fee structure (default 0.3%)
-- Custom fee wallet support
+
+-   Handles token transfers to/from SaucerSwap router
+-   Manages WHBAR wrapping/unwrapping for HBAR swaps
+-   Configurable fee structure (default 0.3%)
+-   Custom fee wallet support
 
 **Constructor Parameters:**
 
@@ -758,10 +768,11 @@ NEXT_PUBLIC_SWAP_ROUTER_TYPE=etaswap
 ```
 
 **Benefits:**
-- Battle-tested, audited contract
-- Actively maintained by ETASwap team
-- Best routing algorithm
-- Largest liquidity aggregation
+
+-   Battle-tested, audited contract
+-   Actively maintained by ETASwap team
+-   Best routing algorithm
+-   Largest liquidity aggregation
 
 #### 2. Custom Router
 
@@ -775,9 +786,9 @@ NEXT_PUBLIC_CUSTOM_ROUTER_HEDERA_ID=0.0.XXXXX # Hedera account ID
 
 **Use Cases:**
 
-- Custom fee collection
-- Experimental routing algorithms
-- Private deployment requirements
+-   Custom fee collection
+-   Experimental routing algorithms
+-   Private deployment requirements
 
 ### 🪙 Token Configuration
 
@@ -786,11 +797,11 @@ Fetched dynamically from ETASwap API at runtime. No manual configuration needed.
 
 **Key Tokens (Mainnet):**
 
-- HBAR (Native currency)
-- WHBAR: `0.0.1456986` (Wrapped HBAR)
-- USDC: `0.0.456858` (Circle USD Coin)
-- USDT: `0.0.XXXXX` (Tether)
-- SAUCE: `0.0.XXXXX` (SaucerSwap governance token)
+-   HBAR (Native currency)
+-   WHBAR: `0.0.1456986` (Wrapped HBAR)
+-   USDC: `0.0.456858` (Circle USD Coin)
+-   USDT: `0.0.XXXXX` (Tether)
+-   SAUCE: `0.0.XXXXX` (SaucerSwap governance token)
 
 ### 📉 Slippage Configuration
 
@@ -839,53 +850,60 @@ npx tsx scripts/check-balances    # Check account token balances
 ### 🔄 Development Workflow
 
 1. **Run development server:**
-   ```bash
-   pnpm dev
-   ```
+
+    ```bash
+    pnpm dev
+    ```
 
 2. **Make changes** to components, hooks, or utilities
 
 3. **Test in browser** at `http://localhost:3000`
 
 4. **Check TypeScript errors:**
-   ```bash
-   pnpm tsc --noEmit
-   ```
+
+    ```bash
+    pnpm tsc --noEmit
+    ```
 
 5. **Lint code:**
-   ```bash
-   pnpm lint
-   ```
+
+    ```bash
+    pnpm lint
+    ```
 
 6. **Build for production:**
-   ```bash
-   pnpm build
-   ```
+    ```bash
+    pnpm build
+    ```
 
 ### 🧪 Testing on Testnet
 
 1. **Set Hedera network to testnet:**
-   ```bash
-   NEXT_PUBLIC_HEDERA_NETWORK=testnet
-   ```
+
+    ```bash
+    NEXT_PUBLIC_HEDERA_NETWORK=testnet
+    ```
 
 2. **Get testnet HBAR:**
-   - Visit [Hedera Portal](https://portal.hedera.com/)
-   - Create testnet account
-   - Get free testnet HBAR from faucet
+
+    - Visit [Hedera Portal](https://portal.hedera.com/)
+    - Create testnet account
+    - Get free testnet HBAR from faucet
 
 3. **Connect wallet:**
-   - Configure HashPack for testnet
-   - Import testnet account
-   - Connect to DeraSwap
+
+    - Configure HashPack for testnet
+    - Import testnet account
+    - Connect to DeraSwap
 
 4. **Test swaps:**
-   - Swap testnet tokens
-   - Verify transactions on [HashScan Testnet](https://hashscan.io/testnet)
+    - Swap testnet tokens
+    - Verify transactions on [HashScan Testnet](https://hashscan.io/testnet)
 
 ### 🐛 Debugging
 
 **React Query DevTools:**
+
 ```tsx
 // Enabled automatically in development
 // View at: http://localhost:3000
@@ -893,19 +911,20 @@ npx tsx scripts/check-balances    # Check account token balances
 ```
 
 **Console Logs:**
-- Swap execution: `🔄 [SWAP]` prefix
-- Wallet events: `👛 [WALLET]` prefix
-- Route fetching: `🛣️ [ROUTES]` prefix
-- Incentives: `🎁 [INCENTIVES]` prefix
+
+-   Swap execution: `🔄 [SWAP]` prefix
+-   Wallet events: `👛 [WALLET]` prefix
+-   Route fetching: `🛣️ [ROUTES]` prefix
+-   Incentives: `🎁 [INCENTIVES]` prefix
 
 **Common Issues:**
 
-| Issue | Solution |
-|-------|----------|
-| Wallet won't connect | Check Reown Project ID is correct |
-| No routes found | Verify tokens exist on selected network |
-| Transaction fails | Check token association & allowance |
-| NFT claim fails | Verify treasury has available NFT serials |
+| Issue                | Solution                                  |
+| -------------------- | ----------------------------------------- |
+| Wallet won't connect | Check Reown Project ID is correct         |
+| No routes found      | Verify tokens exist on selected network   |
+| Transaction fails    | Check token association & allowance       |
+| NFT claim fails      | Verify treasury has available NFT serials |
 
 ---
 
@@ -916,26 +935,30 @@ npx tsx scripts/check-balances    # Check account token balances
 DeraSwap is optimized for Vercel deployment:
 
 1. **Push to GitHub:**
-   ```bash
-   git push origin main
-   ```
+
+    ```bash
+    git push origin main
+    ```
 
 2. **Import to Vercel:**
-   - Go to [Vercel Dashboard](https://vercel.com/new)
-   - Import your GitHub repository
-   - Vercel auto-detects Next.js configuration
+
+    - Go to [Vercel Dashboard](https://vercel.com/new)
+    - Import your GitHub repository
+    - Vercel auto-detects Next.js configuration
 
 3. **Configure Environment Variables:**
-   - Add all variables from `.env.local`
-   - Never commit `.env.local` to git
+
+    - Add all variables from `.env.local`
+    - Never commit `.env.local` to git
 
 4. **Deploy:**
-   - Vercel deploys automatically on push to main
-   - Preview deployments created for pull requests
+    - Vercel deploys automatically on push to main
+    - Preview deployments created for pull requests
 
 ### 🌐 Deploy to Other Platforms
 
 **Netlify:**
+
 ```bash
 # Install Netlify CLI
 npm install -g netlify-cli
@@ -946,6 +969,7 @@ netlify deploy --prod --dir=.next
 ```
 
 **Self-Hosted (Docker):**
+
 ```dockerfile
 FROM node:18-alpine
 
@@ -966,17 +990,17 @@ docker run -p 3000:3000 --env-file .env.local deraswap
 
 ### ✅ Production Checklist
 
-- [ ] Environment variables configured (all secrets set)
-- [ ] Supabase database tables created with indexes
-- [ ] NFT treasury account funded with NFTs
-- [ ] Validation Cloud API key active (or public Mirror Node configured)
-- [ ] Reown Project ID whitelisted for production domain
-- [ ] Router type configured (`etaswap` or `custom`)
-- [ ] Test swap on production before public launch
-- [ ] Test NFT claim flow end-to-end
-- [ ] Analytics/monitoring configured (optional)
-- [ ] Domain configured with SSL certificate
-- [ ] Error tracking setup (Sentry, etc.) - optional
+-   [ ] Environment variables configured (all secrets set)
+-   [ ] Supabase database tables created with indexes
+-   [ ] NFT treasury account funded with NFTs
+-   [ ] Validation Cloud API key active (or public Mirror Node configured)
+-   [ ] Reown Project ID whitelisted for production domain
+-   [ ] Router type configured (`etaswap` or `custom`)
+-   [ ] Test swap on production before public launch
+-   [ ] Test NFT claim flow end-to-end
+-   [ ] Analytics/monitoring configured (optional)
+-   [ ] Domain configured with SSL certificate
+-   [ ] Error tracking setup (Sentry, etc.) - optional
 
 ---
 
@@ -988,10 +1012,10 @@ docker run -p 3000:3000 --env-file .env.local deraswap
 
 **Query Parameters:**
 
-- `from` (required): Source token ID (Hedera format: `0.0.XXXXX`)
-- `to` (required): Destination token ID
-- `amount` (required): Amount to swap (in token's base units)
-- `slippage` (optional): Slippage tolerance percentage (default: 0.5)
+-   `from` (required): Source token ID (Hedera format: `0.0.XXXXX`)
+-   `to` (required): Destination token ID
+-   `amount` (required): Amount to swap (in token's base units)
+-   `slippage` (optional): Slippage tolerance percentage (default: 0.5)
 
 **Example:**
 
@@ -1000,22 +1024,23 @@ GET /api/swap-routes?from=0.0.1456986&to=0.0.456858&amount=100000000&slippage=0.
 ```
 
 **Response:**
+
 ```json
 {
-  "routes": [
-    {
-      "aggregatorId": "SaucerSwapV2",
-      "path": ["0.0.1456986", "0.0.456858"],
-      "amountIn": "100000000",
-      "amountOut": "50000000",
-      "priceImpact": 0.12,
-      "gasEstimate": "0.001",
-      "route": [
-        { "tokenId": "0.0.1456986", "symbol": "WHBAR" },
-        { "tokenId": "0.0.456858", "symbol": "USDC" }
-      ]
-    }
-  ]
+    "routes": [
+        {
+            "aggregatorId": "SaucerSwapV2",
+            "path": ["0.0.1456986", "0.0.456858"],
+            "amountIn": "100000000",
+            "amountOut": "50000000",
+            "priceImpact": 0.12,
+            "gasEstimate": "0.001",
+            "route": [
+                { "tokenId": "0.0.1456986", "symbol": "WHBAR" },
+                { "tokenId": "0.0.456858", "symbol": "USDC" }
+            ]
+        }
+    ]
 }
 ```
 
@@ -1024,12 +1049,13 @@ GET /api/swap-routes?from=0.0.1456986&to=0.0.456858&amount=100000000&slippage=0.
 **Endpoint:** `GET /api/token-prices`
 
 **Response:**
+
 ```json
 {
-  "prices": {
-    "0.0.1456986": { "usd": 0.045, "lastUpdated": "2024-01-15T12:00:00Z" },
-    "0.0.456858": { "usd": 1.00, "lastUpdated": "2024-01-15T12:00:00Z" }
-  }
+    "prices": {
+        "0.0.1456986": { "usd": 0.045, "lastUpdated": "2024-01-15T12:00:00Z" },
+        "0.0.456858": { "usd": 1.0, "lastUpdated": "2024-01-15T12:00:00Z" }
+    }
 }
 ```
 
@@ -1039,21 +1065,23 @@ GET /api/swap-routes?from=0.0.1456986&to=0.0.456858&amount=100000000&slippage=0.
 
 **Query Parameters:**
 
-- `wallet` (required): User's Hedera account ID
+-   `wallet` (required): User's Hedera account ID
 
 **Example:**
+
 ```bash
 GET /api/incentives/progress?wallet=0.0.123456
 ```
 
 **Response:**
+
 ```json
 {
-  "walletAddress": "0.0.123456",
-  "totalSwappedUSD": 15.50,
-  "nftMinted": false,
-  "eligible": true,
-  "progress": 155
+    "walletAddress": "0.0.123456",
+    "totalSwappedUSD": 15.5,
+    "nftMinted": false,
+    "eligible": true,
+    "progress": 155
 }
 ```
 
@@ -1062,23 +1090,25 @@ GET /api/incentives/progress?wallet=0.0.123456
 **Endpoint:** `POST /api/incentives/record-swap`
 
 **Request Body:**
+
 ```json
 {
-  "walletAddress": "0.0.123456",
-  "transactionId": "0.0.123456@1234567890.123456789",
-  "tokenInId": "0.0.1456986",
-  "tokenOutId": "0.0.456858",
-  "amountIn": "100000000",
-  "amountOut": "50000000",
-  "usdValue": 4.50
+    "walletAddress": "0.0.123456",
+    "transactionId": "0.0.123456@1234567890.123456789",
+    "tokenInId": "0.0.1456986",
+    "tokenOutId": "0.0.456858",
+    "amountIn": "100000000",
+    "amountOut": "50000000",
+    "usdValue": 4.5
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "newTotalUSD": 19.50
+    "success": true,
+    "newTotalUSD": 19.5
 }
 ```
 
@@ -1092,41 +1122,41 @@ Contributions are welcome! Please follow these guidelines:
 
 1. **Fork the repository**
 2. **Create a feature branch:**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
 3. **Make changes and commit:**
-   ```bash
-   git commit -m "feat: add amazing feature"
-   ```
+    ```bash
+    git commit -m "feat: add amazing feature"
+    ```
 4. **Push to your fork:**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+    ```bash
+    git push origin feature/your-feature-name
+    ```
 5. **Open a Pull Request**
 
 ### 📝 Commit Convention
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `style:` Code style changes (formatting, etc.)
-- `refactor:` Code refactoring
-- `test:` Test additions or changes
-- `chore:` Maintenance tasks
+-   `feat:` New feature
+-   `fix:` Bug fix
+-   `docs:` Documentation changes
+-   `style:` Code style changes (formatting, etc.)
+-   `refactor:` Code refactoring
+-   `test:` Test additions or changes
+-   `chore:` Maintenance tasks
 
 ### 🎨 Code Style
 
-- **TypeScript:** Strict mode enabled
-- **ESLint:** Run `pnpm lint` before committing
-- **Formatting:** Prettier (auto-format on save recommended)
-- **Components:** Use functional components with hooks
-- **Naming:**
-  - Components: PascalCase (`SwapCard.tsx`)
-  - Hooks: camelCase with `use` prefix (`useSwapRoutes.ts`)
-  - Utilities: camelCase (`transactionBuilder.ts`)
+-   **TypeScript:** Strict mode enabled
+-   **ESLint:** Run `pnpm lint` before committing
+-   **Formatting:** Prettier (auto-format on save recommended)
+-   **Components:** Use functional components with hooks
+-   **Naming:**
+    -   Components: PascalCase (`SwapCard.tsx`)
+    -   Hooks: camelCase with `use` prefix (`useSwapRoutes.ts`)
+    -   Utilities: camelCase (`transactionBuilder.ts`)
 
 ---
 
@@ -1138,12 +1168,12 @@ This project is open-source and available under the **MIT License**.
 
 ## 🙏 Acknowledgments
 
-- **Hedera Hashgraph** - Enterprise-grade blockchain platform
-- **ETASwap** - DEX aggregation infrastructure
-- **SaucerSwap** - Primary DEX on Hedera
-- **Reown (WalletConnect)** - Multi-wallet connection standard
-- **Supabase** - PostgreSQL database platform
-- **Vercel** - Hosting and deployment platform
+-   **Hedera Hashgraph** - Enterprise-grade blockchain platform
+-   **ETASwap** - DEX aggregation infrastructure
+-   **SaucerSwap** - Primary DEX on Hedera
+-   **Reown (WalletConnect)** - Multi-wallet connection standard
+-   **Supabase** - PostgreSQL database platform
+-   **Vercel** - Hosting and deployment platform
 
 ---
 
@@ -1151,12 +1181,12 @@ This project is open-source and available under the **MIT License**.
 
 <div align="center">
 
-| Resource | Link |
-|----------|------|
-| 🐛 **Issues** | [GitHub Issues](https://github.com/SergioBanuls/deraswap/issues) |
-| 💬 **Discussions** | [GitHub Discussions](https://github.com/SergioBanuls/deraswap/discussions) |
-| 📖 **Documentation** | [docs.deraswap.com](https://docs.deraswap.com) |
-| 🐦 **Twitter** | [@DeraSwap](https://twitter.com/deraswap) |
+| Resource             | Link                                                                       |
+| -------------------- | -------------------------------------------------------------------------- |
+| 🐛 **Issues**        | [GitHub Issues](https://github.com/SergioBanuls/deraswap/issues)           |
+| 💬 **Discussions**   | [GitHub Discussions](https://github.com/SergioBanuls/deraswap/discussions) |
+| 📖 **Documentation** | [docs.deraswap.com](https://docs.deraswap.com)                             |
+| 🐦 **Twitter**       | [@DeraSwap](https://twitter.com/deraswap)                                  |
 
 </div>
 
