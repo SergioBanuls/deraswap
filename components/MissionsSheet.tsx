@@ -58,7 +58,7 @@ export function MissionsSheet({
       <SheetContent className='w-full sm:max-w-md border-l border-white/10 bg-[#0a0a0a] p-0 overflow-hidden flex flex-col'>
         {/* Background Effects */}
         <div className='absolute inset-0 pointer-events-none overflow-hidden'>
-          <div className='absolute top-[-20%] right-[-20%] w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-[100px]' />
+          <div className='absolute top-[-20%] right-[-20%] w-[400px] h-[400px] bg-blue-600/20 rounded-full blur-[100px]' />
           <div className='absolute bottom-[-20%] left-[-20%] w-[300px] h-[300px] bg-blue-600/10 rounded-full blur-[80px]' />
         </div>
 
@@ -74,14 +74,14 @@ export function MissionsSheet({
           </SheetHeader>
 
           {/* Profile Card */}
-          <div className='relative group overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:bg-white/10'>
-            <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
+          <div className='relative group overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all'>
+            <div className='absolute inset-0 bg-linear-to-r from-blue-500/10 to-cyan-500/10 opacity-0 transition-opacity duration-500' />
             
             <div className='relative flex items-center gap-4'>
               <div className='relative'>
-                <div className='w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-[2px]'>
+                <div className='w-12 h-12 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 p-[2px]'>
                   <div className='w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden'>
-                    <div className='w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center'>
+                    <div className='w-full h-full bg-linear-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center'>
                       <span className='text-lg font-bold text-white'>
                         {accountId.slice(0, 2)}
                       </span>
@@ -144,87 +144,41 @@ export function MissionsSheet({
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
               <h3 className='text-sm font-bold text-white flex items-center gap-2'>
-                <Target className='w-4 h-4 text-purple-400' />
+                <Target className='w-4 h-4 text-blue-400' />
                 Active Missions
               </h3>
-              <span className='text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30'>
+              <span className='text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30'>
                 LIVE
               </span>
             </div>
 
             {/* Mission Card */}
-            <div className='relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-b from-purple-900/20 to-black/40 p-1'>
-              <div className='absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent opacity-50' />
+            <div className='relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-900/20 to-black/40 p-1'>
+              <div className='absolute inset-0 bg-linear-to-br from-blue-500/10 via-transparent to-transparent opacity-50' />
               
               <div className='relative bg-[#0a0a0a]/80 backdrop-blur-sm rounded-xl p-4 space-y-4'>
                 <div className='flex items-start gap-4'>
                   <div className='relative group'>
-                    <div className='absolute inset-0 bg-purple-500 blur-lg opacity-40 group-hover:opacity-60 transition-opacity' />
-                    <div className='relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-xl'>
+                    <div className='absolute inset-0 bg-blue-500 blur-lg opacity-40 group-hover:opacity-60 transition-opacity' />
+                    <div className='relative w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-xl'>
                       <Crown className='w-6 h-6 text-white' />
                     </div>
                   </div>
                   
                   <div className='flex-1'>
                     <h4 className='text-base font-bold text-white mb-1'>
-                      First Swap Legend
+                      Early Swaper
                     </h4>
                     <p className='text-xs text-neutral-400 leading-relaxed'>
-                      Complete a swap of <span className='text-purple-300 font-bold'>$10+ USD</span> to mint your exclusive Founder's Badge NFT.
+                      Reach a <span className='text-blue-300 font-bold'>$10+ USD</span> swap volume.
                     </p>
                   </div>
                 </div>
 
-                <div className='h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent' />
+                <div className='h-px w-full bg-linear-to-r from-transparent via-white/10 to-transparent' />
 
                 {/* Progress Component */}
                 <IncentiveProgress walletAddress={accountId} />
-              </div>
-            </div>
-          </div>
-
-          {/* Upcoming Missions */}
-          <div className='space-y-4'>
-            <h3 className='text-sm font-bold text-white flex items-center gap-2 opacity-80'>
-              <Sparkles className='w-4 h-4 text-blue-400' />
-              Coming Soon
-            </h3>
-
-            <div className='group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 hover:bg-white/[0.04] transition-colors'>
-              <div className='flex items-center gap-4 opacity-50 group-hover:opacity-80 transition-opacity'>
-                <div className='w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/5'>
-                  <Zap className='w-6 h-6 text-neutral-500' />
-                </div>
-                <div className='flex-1'>
-                  <h4 className='text-sm font-bold text-neutral-300 mb-1'>
-                    Liquidity Master
-                  </h4>
-                  <p className='text-xs text-neutral-500'>
-                    Provide liquidity to earn yield and rewards
-                  </p>
-                </div>
-                <div className='px-2 py-1 rounded text-[10px] font-medium bg-white/5 text-neutral-500 border border-white/5'>
-                  LOCKED
-                </div>
-              </div>
-            </div>
-
-            <div className='group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 hover:bg-white/[0.04] transition-colors'>
-              <div className='flex items-center gap-4 opacity-50 group-hover:opacity-80 transition-opacity'>
-                <div className='w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/5'>
-                  <Shield className='w-6 h-6 text-neutral-500' />
-                </div>
-                <div className='flex-1'>
-                  <h4 className='text-sm font-bold text-neutral-300 mb-1'>
-                    Governance Guardian
-                  </h4>
-                  <p className='text-xs text-neutral-500'>
-                    Participate in your first DAO vote
-                  </p>
-                </div>
-                <div className='px-2 py-1 rounded text-[10px] font-medium bg-white/5 text-neutral-500 border border-white/5'>
-                  LOCKED
-                </div>
               </div>
             </div>
           </div>

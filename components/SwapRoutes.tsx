@@ -406,7 +406,7 @@ export const SwapRoutes = memo(function SwapRoutes({
 
             {/* Routes Container */}
             <div className='bg-neutral-900 rounded-b-3xl p-6 pt-2 space-y-3 max-h-[600px] overflow-y-auto'>
-                {(isLoading || isRefetching) && (
+                {(isLoading || isRefetching || routes === undefined) && (
                     <>
                         {[1, 2, 3].map((i) => (
                             <RouteCardSkeleton key={i} showBadge={i === 1} />
@@ -425,6 +425,7 @@ export const SwapRoutes = memo(function SwapRoutes({
                 {!isLoading &&
                     !isRefetching &&
                     !error &&
+                    routes !== undefined &&
                     (!displayRoutes || displayRoutes.length === 0) && (
                         <div className='text-white/60 text-sm text-center py-4'>
                             No routes available

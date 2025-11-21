@@ -51,7 +51,7 @@ export function IncentiveProgress({ walletAddress }: IncentiveProgressProps) {
       )}
 
       {/* Progress Bar Container */}
-      <div className='space-y-3'>
+      <div className='space-y-2'>
         <div className='flex justify-between items-end'>
           <span className='text-xs font-medium text-neutral-400'>
             Progress Tracker
@@ -69,7 +69,7 @@ export function IncentiveProgress({ walletAddress }: IncentiveProgressProps) {
         {/* Progress Bar */}
         <div className='relative w-full h-4 bg-black/40 rounded-full overflow-hidden border border-white/5 shadow-inner'>
           <div
-            className='absolute top-0 left-0 h-full bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 transition-all duration-1000 ease-out rounded-full'
+            className='absolute top-0 left-0 h-full bg-linear-to-r from-purple-600 via-pink-500 to-purple-600 transition-all duration-1000 ease-out rounded-full'
             style={{ width: `${progressPercentage}%` }}
           >
             <div className='absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite] skew-x-12' />
@@ -136,9 +136,6 @@ export function IncentiveProgress({ walletAddress }: IncentiveProgressProps) {
           <div className='absolute -right-4 -top-4 w-20 h-20 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition-colors' />
 
           <div className='flex items-start gap-3 relative z-10'>
-            <div className='w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 border border-green-500/30'>
-              <CheckCircle2 className='w-4 h-4 text-green-400' />
-            </div>
             <div className='flex-1 min-w-0'>
               <p className='text-xs font-bold text-green-400 mb-1 uppercase tracking-wider'>
                 Reward Claimed
