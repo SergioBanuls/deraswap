@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
             },
         ],
     },
+    serverExternalPackages: ['@hashgraph/sdk', 'pino', 'thread-stream'],
 }
 
 export default nextConfig
