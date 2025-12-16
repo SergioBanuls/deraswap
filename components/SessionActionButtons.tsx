@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useReownContext } from '@/contexts/ReownProvider'
+import { useReownContext } from '@/contexts/ReownContext'
 import { MissionsSheet } from './MissionsSheet'
 import { Button } from './ui/button'
 import { Trophy, Loader2, ArrowRight, Wallet } from 'lucide-react'

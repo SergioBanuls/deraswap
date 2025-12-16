@@ -18,7 +18,7 @@
 
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { useReownContext } from '@/contexts/ReownProvider'
+import { useReownContext } from '@/contexts/ReownContext'
 import { SwapRoute } from '@/types/route'
 import { Token } from '@/types/token'
 import { SwapSettings } from '@/types/swap'

@@ -1,20 +1,15 @@
 'use client'
 
-import React, {
-    createContext,
-    useContext,
-    useState,
-    useCallback,
-    useEffect,
-} from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import {
     DAppConnector,
     HederaSessionEvent,
     HederaJsonRpcMethod,
 } from '@hashgraph/hedera-wallet-connect/dist/lib'
 import { LedgerId } from '@hashgraph/sdk'
+import { ReownContext, ReownContextType, WalletType } from './ReownContext'
 
-export type WalletType = 'hashpack' | 'kabila' | 'walletconnect'
+export type { WalletType } from './ReownContext'
 
 // Obtener el Project ID y la red de las variables de entorno
 const PROJECT_ID = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || ''
@@ -44,22 +39,6 @@ const getLedgerId = () =>
     HEDERA_NETWORK === 'mainnet' ? LedgerId.MAINNET : LedgerId.TESTNET
 const getChainId = () =>
     HEDERA_NETWORK === 'mainnet' ? HederaChainId.Mainnet : HederaChainId.Testnet
-
-interface ReownContextType {
-    isConnected: boolean
-    account: string | null
-    loading: boolean
-    walletType: WalletType | null
-    connect: () => Promise<void>
-    connectWithWallet: (walletType: WalletType) => Promise<void>
-    disconnect: () => Promise<void>
-    callNativeMethod: (method: string, params: any) => Promise<any>
-    executeTransactionWithSigner: (transaction: any) => Promise<any>
-    dAppConnector: DAppConnector | null
-    signer: any | null // DAppSigner from hedera-wallet-connect
-}
-
-const ReownContext = createContext<ReownContextType | undefined>(undefined)
 
 let dAppConnector: DAppConnector | null = null
 
@@ -376,12 +355,4 @@ export function ReownProvider({ children }: { children: React.ReactNode }) {
     return (
         <ReownContext.Provider value={value}>{children}</ReownContext.Provider>
     )
-}
-
-export function useReownContext() {
-    const context = useContext(ReownContext)
-    if (context === undefined) {
-        throw new Error('useReownContext must be used within a ReownProvider')
-    }
-    return context
 }

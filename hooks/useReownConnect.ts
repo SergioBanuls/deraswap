@@ -1,6 +1,6 @@
 'use client'
 
-import { useReownContext } from '@/contexts/ReownProvider'
+import { useReownContext } from '@/contexts/ReownContext'
 
 /**
  * Hook simplificado que usa el contexto de Reown
