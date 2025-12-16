@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
-import { ReownProvider } from '@/contexts/ReownProvider'
+import { ReownProviderWrapper } from '@/contexts/ReownProviderWrapper'
 import { Header } from '@/components/Header'
 import { Toaster } from 'sonner'
 
@@ -35,7 +35,7 @@ export default function RootLayout({
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
                 <Providers>
-                    <ReownProvider>
+                    <ReownProviderWrapper>
                         <Header />
                         {children}
                         <Toaster
@@ -48,7 +48,7 @@ export default function RootLayout({
                                 },
                             }}
                         />
-                    </ReownProvider>
+                    </ReownProviderWrapper>
                 </Providers>
             </body>
         </html>
